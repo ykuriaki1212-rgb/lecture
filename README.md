@@ -1,4 +1,4 @@
-Google Workspaceを学んで業務効率化でみんな幸せになろう！
+# Google Workspaceを学んで業務効率化でみんな幸せになろう！
 
 本講座は、Google Workspace全般の知識と実践的なスキルを学ぶ講義です。
 
