@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ランサムウェア初動対応シミュレーション</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'Yu Gothic', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0b1120 0%, #1a1f35 60%, #241426 100%);
+            min-height: 100vh; padding: 24px 16px; color: #e8edf5; line-height: 1.7;
+        }
+        .container { max-width: 840px; margin: 0 auto; }
+
+        header { text-align: center; margin-bottom: 22px; }
+        header h1 { font-size: 1.9rem; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        header h1 .warn { color: #ff5a5a; }
+        header p { color: #9fb0c8; margin-top: 6px; font-size: 0.95rem; }
+
+        /* スタート画面 */
+        .panel {
+            background: #141b2e; border: 1px solid #263252; border-radius: 18px;
+            padding: 32px; box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+        }
+        .start-lead {
+            background: rgba(255,90,90,0.08); border: 1px solid rgba(255,90,90,0.35);
+            border-radius: 12px; padding: 20px; margin-bottom: 22px; color: #ffd7d7;
+        }
+        .start-lead strong { color: #ff7a7a; }
+        .rules { background: #0f1626; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+        .rules h3 { color: #6cc0ff; margin-bottom: 12px; font-size: 1.05rem; }
+        .rules li { list-style: none; padding: 6px 0 6px 26px; position: relative; color: #c3d0e4; }
+        .rules li::before { content: "▶"; position: absolute; left: 0; color: #ff5a5a; font-size: 0.8rem; top: 9px; }
+        .btn-primary {
+            display: block; width: 100%; padding: 18px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #ff5a5a, #c0392b); color: #fff;
+            font-size: 1.15rem; font-weight: bold; cursor: pointer; transition: all 0.25s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(192,57,43,0.5); }
+
+        /* HUD */
+        .hud { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+        .phase-steps { display: flex; gap: 6px; flex: 1; min-width: 180px; }
+        .step-dot { flex: 1; height: 8px; border-radius: 4px; background: #2a3350; transition: background 0.4s; }
+        .step-dot.done { background: #6cc0ff; }
+        .step-dot.current { background: #ffd166; }
+        .damage-wrap { min-width: 210px; }
+        .damage-label { font-size: 0.78rem; color: #9fb0c8; display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .damage-bar { height: 12px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; }
+        .damage-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #f6b93b, #eb2f06); border-radius: 6px; transition: width 0.5s ease; }
+
+        /* シーン */
+        .scene-card { background: #141b2e; border: 1px solid #263252; border-left: 5px solid #ff5a5a; border-radius: 16px; padding: 28px; box-shadow: 0 16px 44px rgba(0,0,0,0.45); }
+        .phase-badge { display: inline-block; background: rgba(108,192,255,0.15); color: #6cc0ff; border: 1px solid rgba(108,192,255,0.4); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; margin-bottom: 16px; }
+        .scene-icon { font-size: 2.4rem; margin-bottom: 8px; }
+        .situation { background: #0f1626; border-radius: 12px; padding: 20px; margin-bottom: 18px; color: #d5e0f0; font-size: 1.05rem; }
+        .question { font-size: 1.2rem; font-weight: bold; color: #fff; margin-bottom: 18px; }
+
+        .choices { display: flex; flex-direction: column; gap: 12px; }
+        .choice-btn {
+            text-align: left; padding: 16px 20px; border-radius: 12px; border: 2px solid #2a3350;
+            background: #1a2238; color: #e8edf5; font-size: 1.03rem; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 14px; line-height: 1.6;
+        }
+        .choice-btn:hover:not(:disabled) { border-color: #6cc0ff; background: #202b47; transform: translateX(4px); }
+        .choice-btn:disabled { cursor: default; }
+        .choice-btn .letter { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; background: #2a3350; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .choice-btn.best { border-color: #2ecc71; background: rgba(46,204,113,0.12); }
+        .choice-btn.best .letter { background: #2ecc71; }
+        .choice-btn.chosen-bad { border-color: #eb2f06; background: rgba(235,47,6,0.12); }
+        .choice-btn.chosen-bad .letter { background: #eb2f06; }
+        .choice-btn.dimmed { opacity: 0.5; }
+        .best-flag { flex-shrink: 0; font-size: 0.75rem; font-weight: bold; color: #0b1120; background: #2ecc71; padding: 3px 9px; border-radius: 9px; display: none; }
+        .choice-btn.best .best-flag { display: inline-block; }
+
+        .feedback { display: none; margin-top: 18px; padding: 18px 20px; border-radius: 12px; font-size: 1rem; line-height: 1.85; }
+        .feedback.show { display: block; animation: fade 0.4s ease; }
+        .feedback.good { background: rgba(46,204,113,0.12); border: 1px solid #2ecc71; color: #b6f0cf; }
+        .feedback.bad { background: rgba(235,47,6,0.1); border: 1px solid #eb2f06; color: #ffc9bd; }
+        .feedback .correct-line { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); color: #cfe6ff; font-size: 0.95rem; }
+        @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-next { display: none; width: 100%; margin-top: 18px; padding: 16px; border: none; border-radius: 12px; background: linear-gradient(135deg, #6cc0ff, #3d7de0); color: #fff; font-size: 1.08rem; font-weight: bold; cursor: pointer; transition: all 0.25s; }
+        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(61,125,224,0.5); }
+        .btn-next.show { display: block; }
+
+        /* 結果 */
+        .result-icon { font-size: 3.4rem; text-align: center; }
+        .result-title { text-align: center; font-size: 1.7rem; color: #fff; margin: 8px 0 20px; }
+        .result-metrics { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+        .metric { flex: 1; min-width: 150px; background: #0f1626; border-radius: 14px; padding: 20px; text-align: center; }
+        .metric .num { font-size: 2.4rem; font-weight: bold; }
+        .metric .num.score { color: #6cc0ff; }
+        .metric .num.dmg { color: #eb2f06; }
+        .metric .cap { color: #9fb0c8; font-size: 0.85rem; margin-top: 4px; }
+        .ending-msg { text-align: center; font-size: 1.15rem; color: #ffe6a7; background: rgba(255,209,102,0.08); border: 1px solid rgba(255,209,102,0.3); border-radius: 12px; padding: 18px; margin-bottom: 22px; }
+        .summary { background: #0f1626; border-radius: 14px; padding: 22px; }
+        .summary h3 { color: #6cc0ff; margin-bottom: 14px; }
+        .summary ol { padding-left: 22px; }
+        .summary li { padding: 6px 0; color: #d5e0f0; }
+        .summary li b { color: #fff; }
+        .takeaway-note { margin-top: 16px; font-size: 0.9rem; color: #9fb0c8; line-height: 1.8; }
+        .btn-retry { display: block; margin: 22px auto 0; padding: 15px 44px; border: none; border-radius: 12px; background: linear-gradient(135deg, #ff5a5a, #c0392b); color: #fff; font-size: 1.05rem; font-weight: bold; cursor: pointer; }
+        .btn-retry:hover { transform: translateY(-2px); }
+
+        .hidden { display: none; }
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.45rem; }
+            .panel, .scene-card { padding: 20px; }
+            .question { font-size: 1.08rem; }
+            .choice-btn { font-size: 0.97rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span class="warn">🚨</span> ランサムウェア初動対応シミュレーション</h1>
+            <p>〜あなたの5つの判断が、会社を救えるか？〜</p>
+        </header>
+
+        <!-- スタート -->
+        <div class="panel" id="startScreen">
+            <div class="start-lead">
+                あなたは従業員120名の<strong>精密部品メーカー</strong>の管理担当者。<br>
+                ある月曜の朝、工場のサーバーが暗号化され、生産ラインが止まりました。<br>
+                これから<strong>5つの場面</strong>で、あなたの判断が問われます。悪い判断は「事業ダメージ度」を押し上げます。
+            </div>
+            <div class="rules">
+                <h3>📋 進め方</h3>
+                <ul>
+                    <li>各場面で、最も適切だと思う対応を1つ選びます</li>
+                    <li>選ぶとすぐに「結果」と「正しい行動」が表示されます</li>
+                    <li>最適な対応なら被害はゼロ。判断を誤るほどダメージが増えます</li>
+                    <li>最後に、あなたの対応スコアと事業ダメージ度を判定します</li>
+                </ul>
+            </div>
+            <button class="btn-primary" onclick="startSim()">対応を開始する 🚀</button>
+        </div>
+
+        <!-- ゲーム -->
+        <div id="gameScreen" class="hidden">
+            <div class="hud">
+                <div class="phase-steps" id="phaseSteps"></div>
+                <div class="damage-wrap">
+                    <div class="damage-label"><span>事業ダメージ度</span><span id="damageText">0%</span></div>
+                    <div class="damage-bar"><div class="damage-fill" id="damageFill"></div></div>
+                </div>
+            </div>
+
+            <div class="scene-card">
+                <span class="phase-badge" id="phaseBadge"></span>
+                <div class="scene-icon" id="sceneIcon"></div>
+                <div class="situation" id="situation"></div>
+                <div class="question" id="question"></div>
+                <div class="choices" id="choices"></div>
+                <div class="feedback" id="feedback"></div>
+                <button class="btn-next" id="nextBtn" onclick="nextScene()">次の場面へ →</button>
+            </div>
+        </div>
+
+        <!-- 結果 -->
+        <div id="resultScreen" class="panel hidden">
+            <div class="result-icon" id="resultIcon">🏆</div>
+            <div class="result-title" id="resultTitle">対応完了</div>
+            <div class="result-metrics">
+                <div class="metric"><div class="num score" id="finalScore">0</div><div class="cap">対応スコア（/500点）</div></div>
+                <div class="metric"><div class="num dmg" id="finalDamage">0%</div><div class="cap">事業ダメージ度</div></div>
+            </div>
+            <div class="ending-msg" id="endingMsg"></div>
+            <div class="summary">
+                <h3>🛡️ ランサムウェア初動 5つの鉄則</h3>
+                <ol>
+                    <li><b>隔離</b>：まずネットワークから切り離す（電源は切らず証拠を残す）</li>
+                    <li><b>報告</b>：ひとりで抱えず、経営・情報担当・警察・IPAへ連絡</li>
+                    <li><b>支払わない</b>：身代金は復旧を保証せず、次の標的にされる</li>
+                    <li><b>復旧</b>：感染原因を除去してから、オフラインバックアップで戻す</li>
+                    <li><b>備える</b>：今回の経験を「IT-BCP」として訓練・点検の仕組みにする</li>
+                </ol>
+                <p class="takeaway-note">▼ 最大の備えは日頃の「オフラインバックアップ」と「多要素認証」。困ったら警察サイバー窓口・IPA・専門会社へ。“地震や水害のBCPがある会社は、IT-BCPへの拡張が最速”です。</p>
+            </div>
+            <button class="btn-retry" onclick="location.reload()">もう一度挑戦する</button>
+        </div>
+    </div>
+
+    <script>
+        const scenes = [
+            {
+                phase: 'PHASE 1／5：検知・初動対応',
+                icon: '🚨',
+                situation: '月曜8:30、出社すると数名の社員が「PCが変な画面になっている」と騒いでいる。生産管理サーバーに接続できず、共有フォルダのファイルが次々と「.locked」に変わっていく。画面には英語で身代金要求メッセージ。まだ症状の出ていないPCもある。',
+                question: '被害を最小限にするため、真っ先にやるべきことは？',
+                bestIndex: 0,
+                correct: '社内ネットワークを遮断し、感染を「隔離」して拡大を止める',
+                choices: [
+                    { text: '社内ネットワークを遮断し、無事な端末も含めてLAN・Wi-Fiから切り離して感染拡大を止める', score: 100, damage: 0, good: true, feedback: '✅ 正解。ランサムウェアはネットワーク経由で横に広がります。まず「隔離」で拡大を止めるのが鉄則。無事な端末を守れました。' },
+                    { text: '全社員に「PCを触るな」と伝えるだけで、切り離しはせず様子を見る', score: 40, damage: 20, good: false, feedback: '△ 呼びかけは大切ですが、その間も感染は広がります。物理的にネットワークから切り離すまでが「隔離」です。' },
+                    { text: '感染したPCの電源を、片っ端からすべて落とす', score: 30, damage: 25, good: false, feedback: '△ 拡大は止まるかもしれませんが、電源を落とすとメモリ上の証拠が消え、原因究明・復旧・警察の捜査が難しくなります。まず「電源は入れたままネットワーク遮断」。' },
+                    { text: 'まず自分のPCでネット検索し、復号する方法を探す', score: 0, damage: 35, good: false, feedback: '✖ その数分でも感染は拡大します。自己流の対処より、まず隔離と報告。偽の復号ツールでさらに被害が広がる例もあります。' }
+                ]
+            },
+            {
+                phase: 'PHASE 2／5：報告・連携',
+                icon: '📞',
+                situation: 'ネットワークを遮断し、ひとまず感染拡大は止まった。しかし生産ラインは停止し、取引先への納品も控えている。',
+                question: '次にとるべき行動は？',
+                bestIndex: 0,
+                correct: '経営層に即報告し、対応チームを立ち上げ、警察・IPAとも連携する',
+                choices: [
+                    { text: '上司・経営層に即報告して対応チームを立ち上げ、並行して警察のサイバー窓口とIPAに連絡する', score: 100, damage: 0, good: true, feedback: '✅ 正解。ランサムウェアは「組織で対応する」インシデント。経営を巻き込み、外部（警察・IPA・必要なら専門会社）と連携するのが最短の復旧ルートです。' },
+                    { text: '大ごとにしたくないので、報告せず自分たちだけで解決を試みる', score: 0, damage: 30, good: false, feedback: '✖ 隠蔽は最悪手。対応が遅れて被害が拡大し、後で発覚すれば責任問題に発展します。ひとりで抱えないこと。' },
+                    { text: '取引先に「システム障害です」とだけ連絡し、社内への報告は後回しにする', score: 30, damage: 20, good: false, feedback: '△ 対外連絡より先に、社内で正確な状況把握と方針決定を。順序を誤ると情報が錯綜し、信頼を損ないます。' },
+                    { text: 'すぐにSNSと自社サイトで「ランサム被害にあいました」と詳細を公表する', score: 20, damage: 20, good: false, feedback: '△ 事実確認前の拙速な公表は混乱を招きます。公表は範囲・内容を精査し、経営判断のもとで行います。' }
+                ]
+            },
+            {
+                phase: 'PHASE 3／5：経営判断（身代金）',
+                icon: '💰',
+                situation: '攻撃者から追加の脅迫が届いた。「72時間以内に暗号資産を支払わなければ、盗んだ図面を公開し、要求額を倍にする」。納期は迫り、社内には「早く払って復旧を」という声も出ている。',
+                question: '経営判断として、どうする？',
+                bestIndex: 0,
+                correct: '身代金は支払わず、警察・専門家と連携してバックアップから復旧する',
+                choices: [
+                    { text: '身代金は支払わない方針を確認。警察・専門家と連携し、バックアップからの復旧に全力を注ぐ', score: 100, damage: 0, good: true, feedback: '✅ 正解。支払っても復旧の保証はなく、二重恐喝では払ってもデータを公開されることが。「支払う会社」と認識され再び狙われます。警察庁・IPAも支払わない方針を推奨。' },
+                    { text: '事業への影響が大きすぎるので、要求どおり身代金を支払う', score: 0, damage: 30, good: false, feedback: '✖ 復旧の保証はなく、データを公開されることも。犯罪組織の資金源となり、次の標的にされます。' },
+                    { text: '金額を下げられないか、攻撃者と交渉を続ける', score: 20, damage: 20, good: false, feedback: '△ 攻撃者との直接交渉は素人には危険で、やり取り自体が新たなリスク。交渉は専門家・当局に委ねます。' }
+                ]
+            },
+            {
+                phase: 'PHASE 4／5：復旧',
+                icon: '🔧',
+                situation: '幸い、重要データは週次で「オフラインのバックアップ」（ネットから切り離して保管）を取っていた。いよいよ復旧に着手する。',
+                question: '復旧の進め方として正しいのは？',
+                bestIndex: 0,
+                correct: '感染原因を除去してから、クリーンな環境にバックアップを復元する',
+                choices: [
+                    { text: '感染経路と影響範囲を特定・除去してから、クリーンな環境にバックアップを復元。全パスワード変更と多要素認証も導入する', score: 100, damage: 0, good: true, feedback: '✅ 正解。原因を残したまま戻すと再感染します。「原因除去→クリーン復元→認証強化」が鉄則。この機会に多要素認証まで導入できれば理想的です。' },
+                    { text: '一刻も早く動かしたいので、原因を調べないまま急いで元の環境にデータを戻す', score: 20, damage: 25, good: false, feedback: '✖ 感染源が残っていれば、戻した瞬間に再暗号化されます。急がば回れです。' },
+                    { text: 'バックアップも信用できないので、何もせず専門家の到着をただ待ち続ける', score: 50, damage: 15, good: false, feedback: '△ 慎重さは大切ですが、止まっている間も損失は膨らみます。専門家と連携しつつ、できる準備は並行して進めましょう。' }
+                ]
+            },
+            {
+                phase: 'PHASE 5／5：事後対応・IT-BCP',
+                icon: '🛡️',
+                situation: '3日後、生産ラインが再稼働。取引先や監督官庁への対応も一段落した。',
+                question: 'この経験を、次にどう活かす？',
+                bestIndex: 0,
+                correct: '初動を「IT-BCP」として文書化し、訓練・点検を仕組みにする',
+                choices: [
+                    { text: '今回の初動を「IT版のBCP（事業継続計画）」として文書化し、定期訓練・バックアップ点検・取引先との連絡手順を整える', score: 100, damage: 0, good: true, feedback: '✅ 正解。災害BCPと同じで、サイバーも「決めて・書いて・訓練する」。一度経験した会社は、IT-BCPへの拡張が最速です。' },
+                    { text: '思い出したくないので、報告書だけ作って早く忘れることにする', score: 20, damage: 15, good: false, feedback: '✖ 教訓を仕組みにしなければ、また同じ被害に遭います。経験を財産に変えましょう。' },
+                    { text: '高価なセキュリティ機器を一式買って、それで安心する', score: 50, damage: 10, good: false, feedback: '△ 機器は入口にすぎません。運用・訓練・バックアップ点検が伴わなければ宝の持ち腐れです。' }
+                ]
+            }
+        ];
+
+        let current = 0, totalScore = 0, damageTotal = 0, answered = false;
+        const letters = ['A', 'B', 'C', 'D'];
+
+        function buildSteps() {
+            const wrap = document.getElementById('phaseSteps');
+            wrap.innerHTML = '';
+            scenes.forEach(() => {
+                const d = document.createElement('div');
+                d.className = 'step-dot';
+                wrap.appendChild(d);
+            });
+        }
+        function updateSteps() {
+            document.querySelectorAll('.step-dot').forEach((d, i) => {
+                d.classList.remove('done', 'current');
+                if (i < current) d.classList.add('done');
+                else if (i === current) d.classList.add('current');
+            });
+        }
+        function updateDamage() {
+            const shown = Math.min(100, damageTotal);
+            document.getElementById('damageFill').style.width = shown + '%';
+            document.getElementById('damageText').textContent = shown + '%';
+        }
+
+        function startSim() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            current = 0; totalScore = 0; damageTotal = 0;
+            buildSteps();
+            showScene();
+        }
+
+        function showScene() {
+            answered = false;
+            const s = scenes[current];
+            updateSteps();
+            document.getElementById('phaseBadge').textContent = s.phase;
+            document.getElementById('sceneIcon').textContent = s.icon;
+            document.getElementById('situation').textContent = s.situation;
+            document.getElementById('question').textContent = s.question;
+
+            const box = document.getElementById('choices');
+            box.innerHTML = '';
+            s.choices.forEach((c, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerHTML = `<span class="letter">${letters[i]}</span><span style="flex:1">${c.text}</span><span class="best-flag">最適</span>`;
+                btn.onclick = () => choose(i);
+                box.appendChild(btn);
+            });
+
+            const fb = document.getElementById('feedback');
+            fb.className = 'feedback';
+            document.getElementById('nextBtn').classList.remove('show');
+            document.getElementById('nextBtn').textContent = current < scenes.length - 1 ? '次の場面へ →' : '結果を見る →';
+        }
+
+        function choose(idx) {
+            if (answered) return;
+            answered = true;
+            const s = scenes[current];
+            const c = s.choices[idx];
+            totalScore += c.score;
+            damageTotal += c.damage;
+            updateDamage();
+
+            document.querySelectorAll('.choice-btn').forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === s.bestIndex) btn.classList.add('best');
+                else if (i === idx) btn.classList.add('chosen-bad');
+                else btn.classList.add('dimmed');
+            });
+
+            const fb = document.getElementById('feedback');
+            fb.className = 'feedback show ' + (c.good ? 'good' : 'bad');
+            let html = c.feedback;
+            if (!c.good) html += `<span class="correct-line">✔ 正しい行動：${s.correct}</span>`;
+            fb.innerHTML = html;
+
+            document.getElementById('nextBtn').classList.add('show');
+        }
+
+        function nextScene() {
+            current++;
+            if (current < scenes.length) {
+                showScene();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            updateSteps();
+
+            const dmg = Math.min(100, damageTotal);
+            document.getElementById('finalScore').textContent = totalScore;
+            document.getElementById('finalDamage').textContent = dmg + '%';
+
+            let icon, title, msg;
+            if (damageTotal === 0) {
+                icon = '🏆'; title = '模範対応！';
+                msg = '完璧な初動でした。最小限の被害で会社を守り抜きました。この“型”を職場のみんなで共有しましょう。';
+            } else if (damageTotal <= 40) {
+                icon = '👍'; title = 'よく対応できました';
+                msg = '大きな損失は避けられました。いくつかの判断を見直せば、被害をさらに減らせます。解説の「5つの鉄則」を確認しましょう。';
+            } else if (damageTotal <= 80) {
+                icon = '⚠️'; title = '復旧はできたが…';
+                msg = '対応の遅れやミスで被害が拡大しました。取引先の信頼にも影響が残ります。初動の順序をもう一度おさらいしましょう。';
+            } else {
+                icon = '🚨'; title = '深刻な打撃';
+                msg = '判断の誤りが重なり、事業に深刻なダメージ。だからこそ、今日“初動の型”を身につける価値があります。もう一度挑戦を。';
+            }
+            document.getElementById('resultIcon').textContent = icon;
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('endingMsg').textContent = msg;
+        }
+    </script>
+</body>
+</html>

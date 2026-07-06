@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情報セキュリティ ケーススタディ｜中小企業の現場編</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'Yu Gothic', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            padding: 24px 16px;
+            color: #2d3436;
+        }
+
+        .container { max-width: 880px; margin: 0 auto; }
+
+        .header { text-align: center; color: #fff; margin-bottom: 26px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; text-shadow: 2px 2px 6px rgba(0,0,0,0.35); }
+        .header .lead { font-size: 1rem; opacity: 0.9; }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.18);
+            border-radius: 10px; height: 16px; overflow: hidden; margin-top: 16px;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #00b894, #00cec9);
+            height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 10px;
+        }
+        .progress-text { color: #fff; margin-top: 8px; font-size: 0.9rem; }
+
+        .card {
+            background: #fff; border-radius: 20px; padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+
+        .case-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; align-items: center; }
+        .category-badge {
+            display: inline-block; color: #fff; padding: 7px 18px;
+            border-radius: 20px; font-weight: bold; font-size: 0.95rem;
+        }
+        .industry-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #eef2f7; color: #34495e; padding: 7px 16px;
+            border-radius: 20px; font-weight: bold; font-size: 0.9rem;
+        }
+
+        .case-title {
+            font-size: 1.28rem; color: #2d3436; line-height: 1.85;
+            padding: 22px; background: #f8f9fa; border-radius: 12px;
+            border-left: 6px solid #6c5ce7; margin-bottom: 24px;
+        }
+        .case-q { display: block; margin-top: 12px; font-weight: bold; color: #6c5ce7; }
+
+        .options { display: flex; flex-direction: column; gap: 12px; }
+
+        .option-btn {
+            padding: 18px 22px; border: 2px solid #e0e0e0; border-radius: 12px;
+            background: #fff; cursor: pointer; text-align: left; font-size: 1.05rem;
+            transition: all 0.25s ease; display: flex; align-items: center; gap: 14px;
+            line-height: 1.6;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: #6c5ce7; background: #f8f5ff; transform: translateX(4px);
+        }
+        .option-btn:disabled { cursor: default; }
+        .option-btn.dimmed { opacity: 0.55; }
+        .option-btn.best {
+            border-color: #00b894; background: #d4f8e8;
+            box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.2);
+        }
+        .option-btn.chosen-wrong { border-color: #e74c3c; background: #fdf2f2; }
+
+        .option-letter {
+            width: 36px; height: 36px; border-radius: 50%; background: #6c5ce7;
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; flex-shrink: 0;
+        }
+        .option-btn.best .option-letter { background: #00b894; }
+        .option-btn.chosen-wrong .option-letter { background: #e74c3c; }
+        .option-text { flex: 1; }
+        .opt-score {
+            flex-shrink: 0; font-weight: bold; font-size: 0.9rem; padding: 4px 10px;
+            border-radius: 12px; background: #f1f3f5; color: #495057; display: none;
+        }
+        .option-btn.answered .opt-score { display: inline-block; }
+        .best-tag {
+            flex-shrink: 0; font-size: 0.78rem; font-weight: bold; color: #fff;
+            background: #00b894; padding: 3px 10px; border-radius: 10px; display: none;
+        }
+        .option-btn.best .best-tag { display: inline-block; }
+
+        .result-panel {
+            display: none; margin-top: 24px; padding: 24px; border-radius: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #eef2f7);
+        }
+        .result-panel.show { display: block; animation: slideIn 0.45s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+        .score-display { text-align: center; margin-bottom: 18px; }
+        .score-number {
+            font-size: 2.8rem; font-weight: bold;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .score-label { color: #636e72; font-size: 0.95rem; }
+
+        .model-answer { background: #fff; padding: 22px; border-radius: 12px; border-left: 6px solid #00b894; }
+        .model-answer h4 { color: #00b894; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; }
+        .model-answer p { line-height: 1.9; color: #2d3436; font-size: 1rem; }
+
+        .next-btn {
+            display: none; width: 100%; padding: 18px; margin-top: 20px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #fff;
+            border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .next-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(108, 92, 231, 0.4); }
+        .next-btn.show { display: block; }
+
+        /* 最終結果 */
+        .final-result { display: none; text-align: center; }
+        .final-result.show { display: block; }
+        .final-score-circle {
+            width: 190px; height: 190px; border-radius: 50%;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            margin: 26px auto; box-shadow: 0 15px 40px rgba(108, 92, 231, 0.4);
+        }
+        .final-score-number { font-size: 3.4rem; font-weight: bold; color: #fff; }
+        .final-score-text { color: rgba(255,255,255,0.85); font-size: 1rem; }
+        .final-message { font-size: 1.4rem; color: #2d3436; margin: 18px 0; }
+
+        .score-breakdown { background: #f8f9fa; border-radius: 12px; padding: 22px; margin: 24px 0; text-align: left; }
+        .score-breakdown h4 { margin-bottom: 14px; color: #6c5ce7; }
+        .breakdown-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0; gap: 12px; }
+        .breakdown-item:last-child { border-bottom: none; }
+        .breakdown-item .bd-label { flex: 1; }
+
+        .takeaway {
+            background: linear-gradient(135deg, #fff9e6, #fff3cd); border: 1px solid #ffd966;
+            border-radius: 14px; padding: 24px; margin: 24px 0; text-align: left;
+        }
+        .takeaway h4 { color: #b8860b; margin-bottom: 14px; font-size: 1.15rem; }
+        .takeaway ol { padding-left: 22px; }
+        .takeaway li { padding: 7px 0; line-height: 1.7; color: #5f4b0b; font-weight: 600; }
+        .takeaway .sources { margin-top: 14px; font-size: 0.86rem; color: #7a6a3a; font-weight: normal; line-height: 1.7; }
+
+        .retry-btn {
+            padding: 16px 44px; background: linear-gradient(135deg, #00b894, #00cec9);
+            color: #fff; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: bold;
+            cursor: pointer; transition: all 0.3s ease; margin-top: 12px;
+        }
+        .retry-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 184, 148, 0.4); }
+
+        .hidden { display: none; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.5rem; }
+            .card { padding: 22px; }
+            .case-title { font-size: 1.1rem; padding: 18px; }
+            .option-btn { font-size: 0.98rem; padding: 15px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 情報セキュリティ ケーススタディ</h1>
+            <p class="lead">中小企業の現場で起きる5つの場面。あなたなら、どう動く？</p>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-text" id="progressText">ケース 1 / 5</div>
+        </div>
+
+        <div class="card">
+            <div id="quizArea">
+                <div class="case-meta">
+                    <span class="category-badge" id="categoryBadge"></span>
+                    <span class="industry-badge" id="industryBadge"></span>
+                </div>
+                <div class="case-title" id="caseTitle"></div>
+                <div class="options" id="optionsContainer"></div>
+
+                <div class="result-panel" id="resultPanel">
+                    <div class="score-display">
+                        <div class="score-number" id="scoreDisplay">0点</div>
+                        <div class="score-label">あなたの選択の評価</div>
+                    </div>
+                    <div class="model-answer">
+                        <h4>💡 模範解答・解説</h4>
+                        <p id="modelAnswer"></p>
+                    </div>
+                </div>
+
+                <button class="next-btn" id="nextBtn">次のケースへ →</button>
+            </div>
+
+            <div class="final-result" id="finalResult">
+                <h2>🎉 全5ケース終了！</h2>
+                <div class="final-score-circle">
+                    <div class="final-score-number" id="finalScore">0</div>
+                    <div class="final-score-text">/ 500点</div>
+                </div>
+                <div class="final-message" id="finalMessage"></div>
+                <div class="score-breakdown">
+                    <h4>📊 ケース別スコア</h4>
+                    <div id="breakdownList"></div>
+                </div>
+                <div class="takeaway">
+                    <h4>🚀 明日からできる3つのアクション</h4>
+                    <ol>
+                        <li>重要なシステムやメールに「多要素認証（MFA）」を設定する</li>
+                        <li>振込先変更の連絡は、必ず“既に知っている電話番号”へ折り返して確認するルールを作る</li>
+                        <li>大切なデータは、ネットから切り離した「オフラインのバックアップ」を定期的に取る</li>
+                    </ol>
+                    <p class="sources">▼ 困ったときの無料相談窓口：IPA（情報処理推進機構）／ 独立行政法人の「情報セキュリティ安心相談窓口」／ 群馬県警サイバー相談窓口 ＃9110／ まずは IPA「SECURITY ACTION」一つ星から。</p>
+                </div>
+                <button class="retry-btn" onclick="location.reload()">もう一度挑戦する</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cases = [
+            {
+                id: 1,
+                category: 'ランサムウェア／二重恐喝',
+                categoryColor: '#e74c3c',
+                industry: '🏭 精密樹脂成形メーカー',
+                title: '朝出社すると、生産管理PCと設計データサーバーが開けない。画面には「データを暗号化した。元に戻したければ暗号資産を支払え。応じなければ盗んだ図面を公開する」と英文のメッセージ。NC加工機のラインも止まっている。',
+                question: 'あなたが現場の担当者なら、まず何をする？',
+                options: [
+                    { text: '画面の指示に従い、暗号資産（身代金）の入手方法を調べ始める', score: 0 },
+                    { text: '感染したPC・サーバーのLANケーブルを抜いてネットワークから切り離し、電源は入れたまま上司・情報担当へ連絡。警察とIPAにも通報する', score: 100 },
+                    { text: 'とにかく被害を止めたいので、工場中のPC・機械の電源をすべて落とす', score: 40 },
+                    { text: 'ネットで復号ツールを探し、ダウンロードして自分で実行してみる', score: 10 }
+                ],
+                bestIndex: 1,
+                modelAnswer: '【最適＝隔離・保全・通報（B）】ランサムウェア対応の鉄則は3つ。①感染端末をネットワークから切り離し感染拡大を止める（LANを抜く／Wi-Fiを切る）②電源は切らずに証拠を保全する（すぐ電源を落とすとメモリ上の痕跡が消え、原因究明や復旧が難しくなる）③自分で判断せず上司・情報担当へ報告し、警察のサイバー窓口とIPAへ通報する。\n・A＝最悪です。支払っても復旧の保証はなく、近年の「二重恐喝」では支払っても盗まれた図面を公開されることがあります。警察庁・IPAも「支払わない」方針を推奨。\n・C＝気持ちは分かりますが、全電源断は証拠を消し、復旧を難しくします。まず「隔離」を。\n・D＝偽の復号ツールにマルウェアが仕込まれている例もあり、自己流の操作は被害を広げます。\n図面・金型データは事業の生命線。日頃から“ネットから切り離したオフラインのバックアップ”を取っておくことが、身代金を払わずに復旧できる最大の備えです。'
+            },
+            {
+                id: 2,
+                category: 'サプライチェーン攻撃',
+                categoryColor: '#e67e22',
+                industry: '🔧 大手の取引先である製造業',
+                title: '主要取引先の大手メーカーから「当社の基準に沿ったセキュリティ対策状況を、チェックシートで提出してほしい。未対応が多い場合は今後の取引を見直す」と通知が届いた。自社に専任のIT担当はいない。',
+                question: 'この通知に、どう対応するのが正解？',
+                options: [
+                    { text: '「中小企業には無理だ」と考え、回答を後回しにする', score: 0 },
+                    { text: '取引継続に関わる“経営課題”として受け止め、IPA「SECURITY ACTION」や業界ガイドラインを使い、できる項目から着手して正直に回答する', score: 100 },
+                    { text: '実態とは違うが、とりあえず全項目「対応済み」と書いて提出する', score: 10 },
+                    { text: '高額なセキュリティ製品を一式そろえて買えば解決すると考える', score: 50 }
+                ],
+                bestIndex: 1,
+                modelAnswer: '【最適＝経営課題として誠実に着手（B）】サプライチェーン攻撃では、攻撃者は守りの堅い大手ではなく、その“入口”となる取引先の中堅・中小企業を狙います。だからこそ大手は取引先に対策を求め、いまや「セキュリティ＝受注条件」の時代です。\n・A＝取引見直しに直結。中小でも今日からできることは数多くあります。\n・C＝虚偽申告は、後で実態と違うと発覚すれば信頼失墜・契約解除・損害賠償のリスク。絶対に避けるべき。\n・D＝製品を入れれば安心とは限りません。まず大切なのは運用と体制です。\nまずは IPA「SECURITY ACTION」一つ星（情報セキュリティ5か条）を宣言し、自動車業界なら自工会・部工会のガイドラインを参照。できる項目から着実に埋め、正直に回答することが取引継続の近道です。'
+            },
+            {
+                id: 3,
+                category: 'BEC（ビジネスメール詐欺）',
+                categoryColor: '#2980b9',
+                industry: '📦 産業ガス・資材商社の経理',
+                title: 'いつもの仕入先の担当者名で「経理システム変更のため、今月から振込先口座が変わりました」とメールが届いた。過去のやり取りが引用され、文面もいつも通り自然。だが、よく見ると差出人ドメインが1文字違う。支払期限は明日。',
+                question: 'この振込依頼に、どう対応する？',
+                options: [
+                    { text: '期限が迫っているので、メールに書かれた新しい口座へ振り込む', score: 0 },
+                    { text: 'メール内の連絡先ではなく、名刺や以前から知っている電話番号に“自分から”電話して、口座変更の事実を確認する', score: 100 },
+                    { text: 'そのメールに返信して「本当に口座変更ですか？」と尋ね、返信が来たら振り込む', score: 20 },
+                    { text: '念のため、これまで通りの“いつもの口座”に振り込んで、そのまま黙っておく', score: 50 }
+                ],
+                bestIndex: 1,
+                modelAnswer: '【最適＝既知の電話番号へ折り返し確認（B）】これはBEC（ビジネスメール詐欺）の典型「請求書型」。攻撃者は過去メールを盗み見て、1文字違いの偽ドメインから自然な文面で振込先変更を連絡します。\n・A＝そのまま被害。国内では大手航空会社が約3.8億円を騙し取られた例も。\n・C＝返信先も攻撃者なので「はい、変更です」と返ってくるだけ。メール上での確認は無意味です。\n・D＝送金被害は避けられますが、詐欺の事実を共有せず放置すると、同じ手口で他の担当者や取引先が被害に遭います。必ず報告・共有を。\n核心は技術ではなく“運用ルール”です。「振込先変更の依頼は、メールに書かれた連絡先ではなく、名刺や以前から知っている電話番号に自分からかけて確認する」。加えて、多要素認証でアカウント乗っ取りを防ぎ、送金は二重承認にし、1文字違いのドメインに注意。BECはウイルスを使わないためセキュリティソフトで防げず、多くの取引先とメールで受発注する商社は典型的な標的です。'
+            },
+            {
+                id: 4,
+                category: '情報管理・持ち出し',
+                categoryColor: '#27ae60',
+                industry: '📐 建設コンサル・補償コンサル',
+                title: '公共事業の補償コンサル業務で、地権者の氏名・住所・土地評価額・補償金額が入ったファイルを、現場調査で使うため私物のUSBメモリにコピーして持ち歩こうとしている。',
+                question: '地権者情報の持ち出し方として、最も適切なのは？',
+                options: [
+                    { text: '手軽で便利なので、私物のUSBメモリにコピーして持ち出す', score: 0 },
+                    { text: '会社が許可した暗号化端末・方法で、必要最小限のデータだけ持ち出す。紛失時の報告手順も事前に確認しておく', score: 100 },
+                    { text: 'USBにパスワードをかけ、忘れないよう付箋に書いて一緒に持ち歩く', score: 20 },
+                    { text: '個人の無料クラウドストレージにアップして、現場でスマホから見る', score: 10 }
+                ],
+                bestIndex: 1,
+                modelAnswer: '【最適＝許可された安全な手段で最小限（B）】公共事業で扱う地権者情報（氏名・住所・土地評価額・補償金額）は極めてセンシティブで、漏えいは発注者（官公庁）からの指名停止に直結します。\n・A＝私物USBは、紛失・盗難・ウイルス感染・退職時の持ち出しリスクの塊。\n・C＝付箋のパスワードはUSBと一緒に紛失すれば無意味。暗号化の体をなしません。\n・D＝無料クラウドはアップロード先の安全性が不明で、アカウントを乗っ取られると一括流出します。\n正解は、会社が許可した暗号化端末・方法で、必要最小限のデータだけを持ち出すこと。そして「紛失したらすぐ報告」の手順を事前に確認しておくことが、被害の最小化につながります。電子納品・情報管理体制が問われる時代、ルールの徹底が受注の前提です。'
+            },
+            {
+                id: 5,
+                category: 'なりすまし・偽アカウント',
+                categoryColor: '#8e44ad',
+                industry: '🏢 取引先・顧客を持つ全業種',
+                title: '取引先から「御社のSNS公式アカウントから友だち申請とメッセージが来たが、本物か？」と問い合わせが入った。確認すると、会社のロゴと社員の写真を無断で使った“偽アカウント”が作られていた。',
+                question: '会社として、まず何をすべき？',
+                options: [
+                    { text: 'まだ実害は出ていないので、しばらく様子を見る', score: 10 },
+                    { text: '事実確認と画面の証拠保全を行い、自社サイト等で顧客・取引先へ注意喚起し、プラットフォームへ削除通報。必要に応じ警察へ相談する', score: 100 },
+                    { text: '偽アカウントに直接メッセージを送り、「やめろ」と抗議する', score: 30 },
+                    { text: '気づかなかったことにして、そのまま放置する', score: 0 }
+                ],
+                bestIndex: 1,
+                modelAnswer: '【最適＝確認・保全・注意喚起・通報（B）】会社のロゴや社員写真を悪用した偽SNSアカウントは、取引先を騙すBECやフィッシングの“入口”になり、放置すれば自社の信頼が大きく傷つきます。\n・A（様子見）／D（放置）＝被害が広がってからでは信頼回復が困難です。\n・C（直接抗議）＝相手を警戒させ、証拠を消される恐れがあります。直接接触は避けましょう。\nまず事実確認と画面（URL・投稿）の証拠保全を行い、自社サイトやメールで取引先・顧客へ「偽アカウントにご注意ください」と注意喚起。SNSプラットフォームへ削除通報し、必要に応じて警察に相談します。日頃から公式アカウントの正しいURL・IDを取引先に周知しておくと、いざという時の被害を最小限にできます。'
+            }
+        ];
+
+        let currentCase = 0;
+        let scores = [];
+        let answered = false;
+
+        function showCase(index) {
+            const c = cases[index];
+            answered = false;
+
+            const cb = document.getElementById('categoryBadge');
+            cb.textContent = c.category;
+            cb.style.background = c.categoryColor;
+            document.getElementById('industryBadge').textContent = c.industry;
+            document.getElementById('caseTitle').innerHTML =
+                c.title + '<span class="case-q">Q. ' + c.question + '</span>';
+            document.getElementById('progressText').textContent = `ケース ${index + 1} / ${cases.length}`;
+            document.getElementById('progressFill').style.width = `${(index / cases.length) * 100}%`;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D'];
+            c.options.forEach((option, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `
+                    <span class="option-letter">${letters[i]}</span>
+                    <span class="option-text">${option.text}</span>
+                    <span class="best-tag">最適</span>
+                    <span class="opt-score">${option.score}点</span>
+                `;
+                btn.onclick = () => selectOption(i);
+                container.appendChild(btn);
+            });
+
+            document.getElementById('resultPanel').classList.remove('show');
+            document.getElementById('nextBtn').classList.remove('show');
+        }
+
+        function selectOption(selectedIndex) {
+            if (answered) return;
+            answered = true;
+
+            const c = cases[currentCase];
+            const score = c.options[selectedIndex].score;
+            scores.push(score);
+
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((btn, i) => {
+                btn.disabled = true;
+                btn.classList.add('answered');
+                if (i === c.bestIndex) {
+                    btn.classList.add('best');
+                } else if (i === selectedIndex) {
+                    btn.classList.add('chosen-wrong');
+                } else {
+                    btn.classList.add('dimmed');
+                }
+            });
+
+            document.getElementById('scoreDisplay').textContent = `${score}点`;
+            document.getElementById('modelAnswer').innerHTML = c.modelAnswer.replace(/\n/g, '<br>');
+            document.getElementById('resultPanel').classList.add('show');
+
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.textContent = currentCase < cases.length - 1 ? '次のケースへ →' : '結果を見る →';
+            nextBtn.classList.add('show');
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            currentCase++;
+            if (currentCase < cases.length) {
+                showCase(currentCase);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showFinalResult();
+            }
+        });
+
+        function showFinalResult() {
+            document.getElementById('quizArea').classList.add('hidden');
+            document.getElementById('finalResult').classList.add('show');
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = '完了！';
+
+            const totalScore = scores.reduce((a, b) => a + b, 0);
+            document.getElementById('finalScore').textContent = totalScore;
+
+            let message = '';
+            if (totalScore === 500) {
+                message = '🏆 パーフェクト！実務対応力が素晴らしいです！';
+            } else if (totalScore >= 400) {
+                message = '👏 優秀です！要点はしっかり押さえられています。';
+            } else if (totalScore >= 250) {
+                message = '📚 惜しい！解説を見て“初動の型”を確認しましょう。';
+            } else {
+                message = '⚠️ 要注意。今日の学びを職場でぜひ共有してください。';
+            }
+            document.getElementById('finalMessage').textContent = message;
+
+            const breakdownList = document.getElementById('breakdownList');
+            breakdownList.innerHTML = '';
+            scores.forEach((score, i) => {
+                const item = document.createElement('div');
+                item.className = 'breakdown-item';
+                item.innerHTML = `
+                    <span class="bd-label">ケース${i + 1}：${cases[i].category}</span>
+                    <span style="font-weight: bold; color: ${score === 100 ? '#00b894' : score >= 50 ? '#f59f00' : '#e74c3c'}">${score}点</span>
+                `;
+                breakdownList.appendChild(item);
+            });
+            const totalItem = document.createElement('div');
+            totalItem.className = 'breakdown-item';
+            totalItem.style.borderTop = '2px solid #6c5ce7';
+            totalItem.style.marginTop = '8px';
+            totalItem.style.paddingTop = '14px';
+            totalItem.innerHTML = `
+                <span class="bd-label" style="font-weight: bold;">合計</span>
+                <span style="font-weight: bold; color: #6c5ce7; font-size: 1.2rem;">${totalScore}点 / 500点</span>
+            `;
+            breakdownList.appendChild(totalItem);
+        }
+
+        showCase(0);
+    </script>
+</body>
+</html>

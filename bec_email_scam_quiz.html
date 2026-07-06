@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>そのメール、振り込む前に！ BEC見破り演習</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'Yu Gothic', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1b2a4a 0%, #223a5e 100%);
+            min-height: 100vh; padding: 24px 16px; color: #2d3436; line-height: 1.7;
+        }
+        .container { max-width: 860px; margin: 0 auto; }
+        header { text-align: center; color: #fff; margin-bottom: 22px; }
+        header h1 { font-size: 1.85rem; text-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+        header p { color: #b9c9e2; margin-top: 6px; font-size: 0.95rem; }
+
+        .progress-bar { background: rgba(255,255,255,0.16); border-radius: 10px; height: 14px; overflow: hidden; margin: 16px auto 6px; max-width: 500px; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #f6b93b, #e58e26); border-radius: 10px; transition: width 0.5s ease; }
+        .progress-text { color: #cfe; font-size: 0.88rem; }
+
+        /* スタート */
+        .panel { background: #fff; border-radius: 18px; padding: 32px; box-shadow: 0 18px 50px rgba(0,0,0,0.3); }
+        .panel h2 { color: #223a5e; margin-bottom: 14px; }
+        .intro-box { background: #eef3fb; border-left: 4px solid #3d6fb4; border-radius: 0 12px 12px 0; padding: 18px 20px; margin-bottom: 20px; color: #34495e; }
+        .intro-box b { color: #c0392b; }
+        .rules { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+        .rules h3 { color: #223a5e; margin-bottom: 10px; font-size: 1.02rem; }
+        .rules li { list-style: none; padding: 6px 0 6px 26px; position: relative; color: #555; }
+        .rules li::before { content: "✓"; position: absolute; left: 4px; color: #27ae60; font-weight: bold; }
+        .btn-primary { display: block; width: 100%; padding: 18px; border: none; border-radius: 12px; background: linear-gradient(135deg, #3d6fb4, #223a5e); color: #fff; font-size: 1.12rem; font-weight: bold; cursor: pointer; transition: all 0.25s; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(34,58,94,0.45); }
+
+        /* メールクライアント */
+        .mail-window { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 16px 44px rgba(0,0,0,0.28); }
+        .mail-toolbar { background: #223a5e; color: #fff; padding: 12px 20px; display: flex; align-items: center; gap: 10px; font-size: 0.92rem; }
+        .mail-toolbar .dot { width: 11px; height: 11px; border-radius: 50%; }
+        .mail-toolbar .inbox { margin-left: 8px; font-weight: bold; }
+        .scenario-tag { margin-left: auto; background: rgba(255,255,255,0.16); padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; }
+
+        .mail-head { padding: 18px 22px; border-bottom: 1px solid #eee; background: #fafbfc; }
+        .mail-row { display: flex; padding: 5px 0; font-size: 0.95rem; }
+        .mail-row .lbl { width: 66px; color: #8894a5; flex-shrink: 0; }
+        .mail-row .val { flex: 1; color: #2d3436; word-break: break-all; }
+        .mail-row .val .addr { color: #34495e; }
+        .subject-row { font-size: 1.12rem; font-weight: bold; color: #1b2a4a; padding: 8px 0 2px; }
+        .mail-body { padding: 22px; font-size: 1.02rem; color: #2d3436; }
+        .mail-body p { margin: 0 0 10px; }
+        .mail-body .acct { background: #f1f3f5; border-radius: 8px; padding: 10px 14px; display: inline-block; font-family: 'Consolas', monospace; margin: 4px 0; }
+        .mark-danger { background: #ffe1dc; border-bottom: 2px solid #e74c3c; padding: 1px 3px; border-radius: 3px; }
+        .mark-safe { background: #d9f5e3; border-bottom: 2px solid #27ae60; padding: 1px 3px; border-radius: 3px; }
+        .reveal .hide-mark { }
+
+        /* 質問 */
+        .q-area { background: #fff; border-radius: 16px; padding: 24px; margin-top: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.14); }
+        .q-title { font-size: 1.12rem; font-weight: bold; color: #1b2a4a; margin-bottom: 16px; }
+        .choices { display: flex; flex-direction: column; gap: 11px; }
+        .choice-btn { text-align: left; padding: 15px 18px; border-radius: 11px; border: 2px solid #e0e4ea; background: #f8fafc; color: #2d3436; font-size: 1rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 13px; line-height: 1.55; }
+        .choice-btn:hover:not(:disabled) { border-color: #3d6fb4; background: #eef3fb; transform: translateX(4px); }
+        .choice-btn:disabled { cursor: default; }
+        .choice-btn .letter { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; background: #3d6fb4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .choice-btn.best { border-color: #27ae60; background: #eafaf0; }
+        .choice-btn.best .letter { background: #27ae60; }
+        .choice-btn.chosen-bad { border-color: #e74c3c; background: #fdeeec; }
+        .choice-btn.chosen-bad .letter { background: #e74c3c; }
+        .choice-btn.dimmed { opacity: 0.55; }
+        .best-flag { flex-shrink: 0; font-size: 0.74rem; font-weight: bold; color: #fff; background: #27ae60; padding: 3px 9px; border-radius: 9px; display: none; }
+        .choice-btn.best .best-flag { display: inline-block; }
+
+        /* 判定 */
+        .verdict { display: none; margin-top: 18px; border-radius: 12px; overflow: hidden; animation: fade 0.4s ease; }
+        .verdict.show { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .verdict-head { padding: 14px 20px; font-weight: bold; font-size: 1.08rem; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .verdict-head.bec { background: #c0392b; }
+        .verdict-head.safe { background: #27ae60; }
+        .verdict-body { padding: 20px; background: #f8f9fa; }
+        .signs-title { font-weight: bold; color: #1b2a4a; margin-bottom: 8px; }
+        .signs-list { margin: 0 0 14px; padding-left: 4px; list-style: none; }
+        .signs-list li { padding: 5px 0 5px 26px; position: relative; color: #444; }
+        .signs-list.bec li::before { content: "⚠"; position: absolute; left: 0; }
+        .signs-list.safe li::before { content: "✅"; position: absolute; left: 0; }
+        .explain { background: #fff; border-radius: 10px; padding: 16px; border-left: 4px solid #3d6fb4; color: #2d3436; line-height: 1.85; }
+        .explain b { color: #c0392b; }
+
+        .btn-next { display: none; width: 100%; margin-top: 16px; padding: 15px; border: none; border-radius: 12px; background: linear-gradient(135deg, #3d6fb4, #223a5e); color: #fff; font-size: 1.05rem; font-weight: bold; cursor: pointer; }
+        .btn-next.show { display: block; }
+        .btn-next:hover { transform: translateY(-2px); }
+
+        /* 結果 */
+        .result-icon { font-size: 3.2rem; text-align: center; }
+        .result-title { text-align: center; font-size: 1.6rem; color: #1b2a4a; margin: 6px 0 10px; }
+        .result-score { text-align: center; font-size: 3rem; font-weight: bold; color: #3d6fb4; }
+        .result-score span { font-size: 1.2rem; color: #8894a5; }
+        .result-msg { text-align: center; color: #555; margin: 12px 0 20px; font-size: 1.05rem; }
+        .rules4 { background: #eef3fb; border-radius: 14px; padding: 22px; }
+        .rules4 h3 { color: #223a5e; margin-bottom: 14px; }
+        .rules4 ol { padding-left: 22px; }
+        .rules4 li { padding: 6px 0; color: #2d3436; }
+        .rules4 li b { color: #c0392b; }
+        .rules4 .note { margin-top: 14px; font-size: 0.9rem; color: #566; line-height: 1.8; }
+        .btn-retry { display: block; margin: 22px auto 0; padding: 15px 44px; border: none; border-radius: 12px; background: linear-gradient(135deg, #3d6fb4, #223a5e); color: #fff; font-size: 1.05rem; font-weight: bold; cursor: pointer; }
+
+        .hidden { display: none; }
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.4rem; }
+            .panel, .q-area { padding: 20px; }
+            .choice-btn { font-size: 0.96rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📧 そのメール、振り込む前に！</h1>
+            <p>BEC（ビジネスメール詐欺）見破り演習 〜「振込先が変わりました」は本物？〜</p>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-text" id="progressText"></div>
+        </header>
+
+        <!-- スタート -->
+        <div class="panel" id="startScreen">
+            <h2>🔍 4通のメールを見破れるか？</h2>
+            <div class="intro-box">
+                <b>BEC（ビジネスメール詐欺）</b>とは、取引先や自社の社長になりすましたメールで、担当者をだまして<b>攻撃者の口座へ送金させる</b>詐欺です。<br>
+                ウイルスを使わず「人」をだますため、<b>セキュリティソフトでは防げません</b>。国内では大手航空会社が約3.8億円をだまし取られた事例も。守るのは“運用ルール”です。
+            </div>
+            <div class="rules">
+                <h3>📋 進め方</h3>
+                <ul>
+                    <li>受信トレイに届いた4通のメールを、1通ずつ確認します</li>
+                    <li>それぞれ「あなたならどう対応するか」を選びます</li>
+                    <li>選ぶと、メールに潜む“危険サイン”と正しい対応が表示されます</li>
+                    <li>全通の対応スコアで、あなたの「だまされにくさ」を判定します</li>
+                </ul>
+            </div>
+            <button class="btn-primary" onclick="startQuiz()">受信トレイを開く 📨</button>
+        </div>
+
+        <!-- ゲーム -->
+        <div id="gameScreen" class="hidden">
+            <div class="mail-window">
+                <div class="mail-toolbar">
+                    <span class="dot" style="background:#ff5f57"></span>
+                    <span class="dot" style="background:#febc2e"></span>
+                    <span class="dot" style="background:#28c840"></span>
+                    <span class="inbox">📥 受信トレイ</span>
+                    <span class="scenario-tag" id="scenarioTag"></span>
+                </div>
+                <div class="mail-head">
+                    <div class="mail-row"><span class="lbl">差出人</span><span class="val" id="mailFrom"></span></div>
+                    <div class="mail-row"><span class="lbl">宛先</span><span class="val" id="mailTo"></span></div>
+                    <div class="mail-row subject-row" id="mailSubject"></div>
+                </div>
+                <div class="mail-body" id="mailBody"></div>
+            </div>
+
+            <div class="q-area">
+                <div class="q-title" id="qTitle"></div>
+                <div class="choices" id="choices"></div>
+                <div class="verdict" id="verdict">
+                    <div class="verdict-head" id="verdictHead"></div>
+                    <div class="verdict-body">
+                        <div class="signs-title" id="signsTitle"></div>
+                        <ul class="signs-list" id="signsList"></ul>
+                        <div class="explain" id="explain"></div>
+                    </div>
+                </div>
+                <button class="btn-next" id="nextBtn" onclick="nextMail()">次のメールへ →</button>
+            </div>
+        </div>
+
+        <!-- 結果 -->
+        <div id="resultScreen" class="panel hidden">
+            <div class="result-icon" id="resultIcon">🏆</div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-score"><span id="finalScore">0</span><span> / 400点</span></div>
+            <div class="result-msg" id="resultMsg"></div>
+            <div class="rules4">
+                <h3>🛡️ BEC 4つの守り</h3>
+                <ol>
+                    <li><b>振込先変更は電話で確認</b>：メール記載の連絡先ではなく、名刺や既知の電話番号へ“自分から”折り返す</li>
+                    <li><b>「至急・極秘・他言無用」は危険信号</b>：急がせ・秘密にさせる依頼ほど疑う</li>
+                    <li><b>送金は二重承認</b>：金額・口座の変更は、必ず別の人・別の経路で裏を取る</li>
+                    <li><b>多要素認証</b>：メールアカウントの乗っ取り（正規アドレスからの割り込み）を根本から防ぐ</li>
+                </ol>
+                <p class="note">▼ BECはウイルスを使わないため、セキュリティソフトでは防げません。決め手は“人と運用のルール”。1文字違いのドメインにも注意しましょう。</p>
+            </div>
+            <button class="btn-retry" onclick="location.reload()">もう一度挑戦する</button>
+        </div>
+    </div>
+
+    <script>
+        const mails = [
+            {
+                tag: '① 仕入先からの連絡',
+                from: '丸琴商事 経理部 &lt;keiri@marukoto-<b class="mark-danger">syouji</b>.co.jp&gt;',
+                fromReveal: '※正規ドメインは marukoto-<b>shouji</b>.co.jp（1文字違い！）',
+                to: 'あなた（経理担当）',
+                subject: '【重要】お振込先口座 変更のお願い',
+                body: [
+                    { t: 'いつも大変お世話になっております。丸琴商事 経理部でございます。' },
+                    { t: 'この度、経理システムの切り替えに伴い、お振込先の口座が変更となりました。', danger: true },
+                    { t: 'お手数ですが、今月のお支払い分より、下記の新しい口座へお願いいたします。' },
+                    { t: 'ぐんぎん銀行 ○○支店 普通 9999999', acct: true },
+                    { t: 'なお、月末が近いため、お早めのご対応をお願い申し上げます。', danger: true }
+                ],
+                isBEC: true,
+                qTitle: 'このメールを受け取ったあなたの、正しい対応は？',
+                bestIndex: 2,
+                choices: [
+                    { text: '期限が近いので、記載の新しい口座へ振り込む', score: 0 },
+                    { text: 'このメールに返信して「変更で間違いないか」確認する', score: 20 },
+                    { text: '名刺や以前から知っている電話番号に自分からかけ、口座変更の事実を確認する', score: 100 },
+                    { text: '自分の判断で、これまで通りの口座に振り込んでおく', score: 50 }
+                ],
+                signsTitle: '⚠ このメールに潜んでいた危険サイン',
+                signs: [
+                    '送信元ドメインが正規と1文字違い（shouji → syouji）',
+                    '「振込先が変更になった」という連絡（BEC最多の手口）',
+                    '「月末が近い」と支払いを急がせている'
+                ],
+                explain: 'BEC「請求書型」の典型です。過去のやり取りを盗み見て、1文字違いの偽ドメインから自然な文面で送ってきます。返信しても相手は攻撃者。核心は<b>「振込先変更の連絡は、メールでなく“既に知っている電話番号”へ折り返して確認」</b>。これに尽きます。'
+            },
+            {
+                tag: '② 社長からの依頼',
+                from: '山田社長 &lt;yamada.shacho@<b class="mark-danger">gmail.com</b>&gt;',
+                fromReveal: '※普段の社内アドレスではなく、フリーメール（gmail）から届いている',
+                to: 'あなた（経理担当）',
+                subject: '【至急・極秘】本日中の送金をお願いします',
+                body: [
+                    { t: '経理担当の方、山田です。今スマホから送っています。' },
+                    { t: '現在、極秘でM&A（会社の買収）案件を進めており、本日中に手付金の送金が必要です。', danger: true },
+                    { t: 'この件は役員にもまだ話していないので、他言は無用でお願いします。', danger: true },
+                    { t: '下記口座へ500万円を送金してください。詳細は後ほど説明します。' },
+                    { t: '△△銀行 □□支店 普通 1234567', acct: true }
+                ],
+                isBEC: true,
+                qTitle: '「社長命令」で「他言無用」。あなたはどうする？',
+                bestIndex: 1,
+                choices: [
+                    { text: '社長の指示なので、急いで送金する', score: 0 },
+                    { text: '他言無用と言われても、社内の送金ルールに従い、上司と社長本人に別の手段で直接確認する', score: 100 },
+                    { text: 'とりあえずメールに返信して、社長に事情を聞く', score: 20 },
+                    { text: '金額が大きいので、ひとまず半額だけ送っておく', score: 0 }
+                ],
+                signsTitle: '⚠ このメールに潜んでいた危険サイン',
+                signs: [
+                    '社長が普段使わないフリーメール（gmail）から届いている',
+                    '「至急」「本日中」で確認する時間を与えない',
+                    '「極秘」「他言無用」で、誰にも相談させないようにしている',
+                    '「役員も知らない」「詳細は後で」と説明が不自然'
+                ],
+                explain: 'BEC「CEO詐欺型」です。緊急性と秘密性で“確認させない”のが狙い。どんなに偉い人からの依頼でも、送金は必ずルール（本人確認・二重承認）に従います。<b>「他言無用」「至急」こそ、最大の危険サイン</b>だと覚えておきましょう。'
+            },
+            {
+                tag: '③ 取引先からの請求書',
+                from: '上州機械 高橋 &lt;takahashi@joushu-kikai.co.jp&gt;',
+                fromReveal: '※いつもの取引先の、いつも通りの正規ドメイン',
+                to: 'あなた（経理担当）',
+                subject: '11月分 請求書送付のご案内',
+                body: [
+                    { t: 'いつもお世話になっております。上州機械の高橋です。' },
+                    { t: '11月分の請求書を添付にてお送りします。ご確認ください。' },
+                    { t: 'お振込先はいつもと同じ、請求書記載の口座でお願いいたします。', safe: true },
+                    { t: '今後ともよろしくお願いいたします。' }
+                ],
+                isBEC: false,
+                qTitle: 'このメール、あなたの対応は？',
+                bestIndex: 0,
+                choices: [
+                    { text: 'いつも通り、請求書の内容を確認して処理する', score: 100 },
+                    { text: '詐欺かもしれないので、取引先を強い口調で問い詰める', score: 30 },
+                    { text: '怖いので、請求を無視して放置する', score: 0 },
+                    { text: '念のため、添付を開かずに削除する', score: 20 }
+                ],
+                signsTitle: '✅ これは“正常なメール”。安全と判断できる理由',
+                signs: [
+                    '送信元は普段と同じ正規ドメイン',
+                    '振込先の変更はなく「いつもと同じ」',
+                    '不自然な緊急性・秘密性がない'
+                ],
+                explain: 'これは正常な業務メールです。BEC対策は<b>「すべてを疑って業務を止める」ことではありません</b>。危険サイン（振込先変更・急かす・秘密）が無ければ通常処理でOK。過剰に疑って取引先を問い詰めると、かえって信頼を損ないます。“サインを見極める目”を養いましょう。'
+            },
+            {
+                tag: '④ 進行中のやり取りへの返信',
+                from: '上州機械 高橋 &lt;takahashi@joushu-kikai.co.jp&gt;',
+                fromReveal: '※アドレスは正規。しかしアカウントが乗っ取られている可能性が…',
+                to: 'あなた（経理担当）',
+                subject: 'Re: 11月分 請求書送付のご案内',
+                body: [
+                    { t: '先ほどの請求の件で、追記です。' },
+                    { t: 'システム移行の都合で、今回だけ下記の別口座へお振込みをお願いできますか。', danger: true },
+                    { t: '急で恐縮ですが、本日中にご対応いただけると助かります。', danger: true },
+                    { t: '××銀行 ○○支店 普通 7654321', acct: true }
+                ],
+                isBEC: true,
+                qTitle: '送信元は“いつものアドレス”です。どうする？',
+                bestIndex: 1,
+                choices: [
+                    { text: 'いつもの相手だから、指示通り別口座へ振り込む', score: 0 },
+                    { text: '正規アドレスでも、振込先・金額の変更は必ず電話で本人確認してから対応する', score: 100 },
+                    { text: 'メールで「別口座で良いですか？」と返信し、OKなら振り込む', score: 20 },
+                    { text: '面倒なので、いつもの口座に振り込んでおく', score: 50 }
+                ],
+                signsTitle: '⚠ このメールに潜んでいた危険サイン',
+                signs: [
+                    '正規アドレスでも“振込先の変更”は要注意（アカウント乗っ取りの可能性）',
+                    '「今回だけ別口座」は典型的な詐欺のサイン',
+                    '「本日中に」と急がせている'
+                ],
+                explain: 'BEC「アカウント乗っ取り型」です。メールアカウントを乗っ取られると、<b>正規アドレスから割り込まれ、アドレスを見ても見破れません</b>。だからこそ「振込先・金額の変更は、送信元が誰であっても必ず別経路（電話）で確認」。そして、乗っ取り自体を防ぐのが<b>多要素認証</b>です。'
+            }
+        ];
+
+        let current = 0, totalScore = 0, answered = false;
+        const letters = ['A', 'B', 'C', 'D'];
+
+        function startQuiz() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            current = 0; totalScore = 0;
+            showMail();
+        }
+
+        function showMail() {
+            answered = false;
+            const m = mails[current];
+            document.getElementById('progressFill').style.width = `${(current / mails.length) * 100}%`;
+            document.getElementById('progressText').textContent = `メール ${current + 1} / ${mails.length}`;
+            document.getElementById('scenarioTag').textContent = m.tag;
+            document.getElementById('mailFrom').innerHTML = m.from;
+            document.getElementById('mailTo').textContent = m.to;
+            document.getElementById('mailSubject').textContent = m.subject;
+
+            let bodyHtml = '';
+            m.body.forEach(line => {
+                if (line.acct) bodyHtml += `<p><span class="acct">${line.t}</span></p>`;
+                else bodyHtml += `<p data-danger="${line.danger ? 1 : 0}" data-safe="${line.safe ? 1 : 0}">${line.t}</p>`;
+            });
+            document.getElementById('mailBody').innerHTML = bodyHtml;
+
+            document.getElementById('qTitle').textContent = m.qTitle;
+            const box = document.getElementById('choices');
+            box.innerHTML = '';
+            m.choices.forEach((c, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerHTML = `<span class="letter">${letters[i]}</span><span style="flex:1">${c.text}</span><span class="best-flag">最適</span>`;
+                btn.onclick = () => choose(i);
+                box.appendChild(btn);
+            });
+
+            document.getElementById('verdict').className = 'verdict';
+            const nb = document.getElementById('nextBtn');
+            nb.className = 'btn-next';
+            nb.textContent = current < mails.length - 1 ? '次のメールへ →' : '結果を見る →';
+        }
+
+        function choose(idx) {
+            if (answered) return;
+            answered = true;
+            const m = mails[current];
+            const c = m.choices[idx];
+            totalScore += c.score;
+
+            document.querySelectorAll('.choice-btn').forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === m.bestIndex) btn.classList.add('best');
+                else if (i === idx) btn.classList.add('chosen-bad');
+                else btn.classList.add('dimmed');
+            });
+
+            // メール本文の危険サイン／安全サインを可視化
+            document.querySelectorAll('#mailBody p').forEach(p => {
+                if (p.dataset.danger === '1') p.classList.add('mark-danger');
+                if (p.dataset.safe === '1') p.classList.add('mark-safe');
+            });
+            // 差出人の補足を表示
+            document.getElementById('mailFrom').innerHTML = m.from + ' <span style="color:#c0392b;font-size:0.85rem;">' + m.fromReveal + '</span>';
+
+            const vh = document.getElementById('verdictHead');
+            vh.className = 'verdict-head ' + (m.isBEC ? 'bec' : 'safe');
+            vh.textContent = m.isBEC ? '🚨 これは BEC（ビジネスメール詐欺）の疑い！' : '✅ これは正常なメールです';
+
+            document.getElementById('signsTitle').textContent = m.signsTitle;
+            const sl = document.getElementById('signsList');
+            sl.className = 'signs-list ' + (m.isBEC ? 'bec' : 'safe');
+            sl.innerHTML = '';
+            m.signs.forEach(s => {
+                const li = document.createElement('li');
+                li.textContent = s;
+                sl.appendChild(li);
+            });
+            document.getElementById('explain').innerHTML = m.explain;
+
+            document.getElementById('verdict').classList.add('show');
+            document.getElementById('nextBtn').classList.add('show');
+        }
+
+        function nextMail() {
+            current++;
+            if (current < mails.length) {
+                showMail();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = '完了！';
+
+            document.getElementById('finalScore').textContent = totalScore;
+            let icon, title, msg;
+            if (totalScore === 400) {
+                icon = '🏆'; title = 'BECマスター！';
+                msg = 'パーフェクト。あなたはBECにだまされません。ぜひ職場のみんなに“折り返し電話確認”を広めてください。';
+            } else if (totalScore >= 300) {
+                icon = '👏'; title = 'だまされにくい人';
+                msg = '高い見破り力です。あと一歩、「振込先変更は必ず電話確認」を習慣にすれば完璧です。';
+            } else if (totalScore >= 200) {
+                icon = '💪'; title = 'もう少し！';
+                msg = '危険サインを見抜く目を、もう少し磨きましょう。下の「BEC 4つの守り」を職場に貼っておくのがおすすめです。';
+            } else {
+                icon = '📚'; title = '要注意！';
+                msg = 'このままでは、いつか大きな被害に。でも大丈夫、対策はシンプルです。「振込先変更は電話で確認」から始めましょう。';
+            }
+            document.getElementById('resultIcon').textContent = icon;
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultMsg').textContent = msg;
+        }
+    </script>
+</body>
+</html>

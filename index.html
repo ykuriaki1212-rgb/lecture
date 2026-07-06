@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脅威情報とセキュリティ対策｜講師用ツールハブ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'Yu Gothic', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 55%, #2c5364 100%);
+            min-height: 100vh; color: #2d3436; line-height: 1.7; padding: 28px 16px;
+        }
+        .wrap { max-width: 1080px; margin: 0 auto; }
+
+        header { text-align: center; color: #fff; margin-bottom: 28px; }
+        .course-badge { display: inline-block; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); padding: 5px 16px; border-radius: 20px; font-size: 0.82rem; margin-bottom: 12px; letter-spacing: 0.04em; }
+        header h1 { font-size: 2.3rem; text-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+        header .sub { font-size: 1.05rem; opacity: 0.92; margin-top: 6px; }
+        header .meta { font-size: 0.9rem; opacity: 0.8; margin-top: 12px; }
+
+        section { background: #fff; border-radius: 18px; padding: 28px; margin-bottom: 22px; box-shadow: 0 16px 44px rgba(0,0,0,0.28); }
+        section h2 { color: #16324f; font-size: 1.35rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+
+        /* 4本柱 */
+        .pillars-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+        .pillar { border-radius: 12px; padding: 16px 18px; color: #fff; }
+        .pillar .p-num { font-size: 0.78rem; opacity: 0.85; font-weight: bold; letter-spacing: 0.08em; }
+        .pillar .p-title { font-size: 1.08rem; font-weight: bold; margin: 4px 0 6px; }
+        .pillar .p-desc { font-size: 0.85rem; opacity: 0.95; line-height: 1.6; }
+        .pillar.p1 { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .pillar.p2 { background: linear-gradient(135deg, #e67e22, #d35400); }
+        .pillar.p3 { background: linear-gradient(135deg, #2980b9, #1f618d); }
+        .pillar.p4 { background: linear-gradient(135deg, #27ae60, #1e8449); }
+
+        /* 時間割 */
+        .tt { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
+        .tt th, .tt td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #eef1f5; vertical-align: top; }
+        .tt th { background: #16324f; color: #fff; font-weight: bold; }
+        .tt tr:hover td { background: #f6f9fc; }
+        .tt .period { font-weight: bold; color: #16324f; white-space: nowrap; }
+        .tt .tool-chip { display: inline-block; background: #eef3fb; color: #234; border-radius: 8px; padding: 3px 9px; font-size: 0.82rem; margin: 2px 4px 2px 0; }
+        .tt .lunch td { background: #fff8e6; color: #9a7b1a; font-weight: bold; text-align: center; }
+
+        /* ツールカード */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+        .card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e8edf3; border-radius: 16px; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.25s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 16px 36px rgba(0,0,0,0.18); }
+        .card-band { height: 8px; }
+        .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .card-cat { font-size: 0.74rem; font-weight: bold; letter-spacing: 0.05em; padding: 3px 10px; border-radius: 10px; align-self: flex-start; margin-bottom: 10px; color: #fff; }
+        .card-icon { font-size: 2rem; }
+        .card-title { font-size: 1.18rem; font-weight: bold; color: #16324f; margin: 6px 0 8px; }
+        .card-desc { font-size: 0.9rem; color: #555; flex: 1; }
+        .card-tags { margin-top: 12px; font-size: 0.8rem; color: #667; }
+        .card-tags span { display: inline-block; background: #f1f3f5; border-radius: 8px; padding: 3px 9px; margin: 2px 4px 2px 0; }
+        .card-open { margin-top: 14px; font-weight: bold; color: #2980b9; font-size: 0.95rem; }
+        .card:hover .card-open { color: #16324f; }
+
+        .band-red { background: #e74c3c; } .cat-red { background: #e74c3c; }
+        .band-orange { background: #e67e22; } .cat-orange { background: #e67e22; }
+        .band-blue { background: #2980b9; } .cat-blue { background: #2980b9; }
+        .band-green { background: #27ae60; } .cat-green { background: #27ae60; }
+        .band-purple { background: #6c5ce7; } .cat-purple { background: #6c5ce7; }
+        .band-gray { background: #718096; } .cat-gray { background: #718096; }
+        .band-teal { background: #16a085; } .cat-teal { background: #16a085; }
+
+        /* クロージング */
+        .closing { background: linear-gradient(135deg, #fff9e6, #fff3cd); border: 1px solid #ffd966; }
+        .closing h2 { color: #b8860b; }
+        .closing ol { padding-left: 22px; }
+        .closing li { padding: 6px 0; color: #5f4b0b; font-weight: 600; }
+        .closing .windows { margin-top: 12px; font-size: 0.88rem; color: #7a6a3a; font-weight: normal; line-height: 1.8; }
+
+        footer { color: rgba(255,255,255,0.85); font-size: 0.85rem; text-align: center; line-height: 1.9; padding: 8px 12px 20px; }
+        footer .note { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 14px 18px; display: inline-block; text-align: left; }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.6rem; }
+            section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div class="course-badge">コース番号 26-10-12-115-106</div>
+            <h1>脅威情報とセキュリティ対策</h1>
+            <p class="sub">講師用ツールハブ｜演習・ゲーム教材ランチャー</p>
+            <div class="meta">2026年7月8日(水) 9:30〜16:30 ／ 群馬職業能力開発促進センター ／ 受講9名・6社（製造・商社・小売・建設コンサル）</div>
+        </header>
+
+        <section>
+            <h2>🎯 この研修の4本柱</h2>
+            <div class="pillars-grid">
+                <div class="pillar p1">
+                    <div class="p-num">PILLAR 1</div>
+                    <div class="p-title">工場を止めるランサムウェア</div>
+                    <div class="p-desc">二重恐喝で知財流出と生産停止が同時に。製造業の生命線を守る初動。</div>
+                </div>
+                <div class="pillar p2">
+                    <div class="p-num">PILLAR 2</div>
+                    <div class="p-title">サプライチェーン攻撃</div>
+                    <div class="p-desc">狙われるのは大手ではなく“入口”の地方中堅。セキュリティ＝受注条件。</div>
+                </div>
+                <div class="pillar p3">
+                    <div class="p-num">PILLAR 3</div>
+                    <div class="p-title">BEC・なりすまし</div>
+                    <div class="p-desc">振込先変更詐欺・偽アカウント。ソフトでは防げず、守るのは運用ルール。</div>
+                </div>
+                <div class="pillar p4">
+                    <div class="p-num">PILLAR 4</div>
+                    <div class="p-title">IT-BCP（まとめ軸）</div>
+                    <div class="p-desc">災害BCPのあるなら、サイバー版へ拡張が最速。明日からの一歩へ。</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>⏱ 時間割と使いどころ</h2>
+            <table class="tt">
+                <thead>
+                    <tr><th style="width:120px;">時限</th><th>内容</th><th style="width:280px;">使う演習ツール</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="period">午前①<br>9:30-</td>
+                        <td>脅威情報の基礎：最新の攻撃動向、地方の中小企業が狙われる理由</td>
+                        <td><span class="tool-chip">導入トーク</span></td>
+                    </tr>
+                    <tr>
+                        <td class="period">午前②</td>
+                        <td>ランサムウェア：工場停止・二重恐喝の実例、初動対応</td>
+                        <td><span class="tool-chip">🚨 ランサムウェア初動シミュレーション</span></td>
+                    </tr>
+                    <tr>
+                        <td class="period">午前③</td>
+                        <td>サプライチェーン攻撃：取引先経由の侵入、「セキュリティ＝受注条件」</td>
+                        <td><span class="tool-chip">🔒 ケーススタディ（ケース2）</span></td>
+                    </tr>
+                    <tr class="lunch"><td colspan="3">🍱 昼休憩 12:00〜13:00</td></tr>
+                    <tr>
+                        <td class="period">午後①</td>
+                        <td>BEC・なりすまし・フィッシング：振込先変更詐欺、誤送信、演習</td>
+                        <td><span class="tool-chip">📧 BEC見破り演習</span><span class="tool-chip">✉️ メール誤送信ゲーム</span></td>
+                    </tr>
+                    <tr>
+                        <td class="period">午後②</td>
+                        <td>情報管理と個人情報保護：顧客情報・図面・地権者情報の守り方</td>
+                        <td><span class="tool-chip">🔐 内部不正クイズ</span><span class="tool-chip">📄 情報漏洩クイズ</span></td>
+                    </tr>
+                    <tr>
+                        <td class="period">午後③<br>-16:30</td>
+                        <td>IT-BCPとまとめ：災害BCPとサイバーBCPの統合、明日からの一歩</td>
+                        <td><span class="tool-chip">🔒 ケーススタディ総括</span><span class="tool-chip">🎰 ルーレットで振り返り</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>🧰 演習ツール（クリックで開く）</h2>
+            <div class="grid">
+
+                <a class="card" href="ransomware_response_sim.html">
+                    <div class="card-band band-red"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-red">PILLAR 1｜ランサムウェア</span>
+                        <div class="card-icon">🚨</div>
+                        <div class="card-title">ランサムウェア初動対応シミュレーション</div>
+                        <div class="card-desc">工場が止まった状況から、隔離→報告→身代金判断→復旧→IT-BCPまでを5つの分岐で体験。判断ミスで「事業ダメージ度」が上昇。</div>
+                        <div class="card-tags"><span>製造業に直撃</span><span>午前②</span><span>分岐ゲーム</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+                <a class="card" href="bec_email_scam_quiz.html">
+                    <div class="card-band band-blue"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-blue">PILLAR 3｜BEC</span>
+                        <div class="card-icon">📧</div>
+                        <div class="card-title">そのメール、振り込む前に！ BEC見破り演習</div>
+                        <div class="card-desc">「振込先が変わりました」は本物か？ 請求書型・CEO詐欺型・乗っ取り型＋正常メールの4通を受信トレイ形式で見破る。</div>
+                        <div class="card-tags"><span>商社・コンサル・小売</span><span>午後①</span><span>見破り</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+                <a class="card" href="email_mistake_game.html">
+                    <div class="card-band band-blue"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-blue">PILLAR 3｜誤送信</span>
+                        <div class="card-icon">✉️</div>
+                        <div class="card-title">メール誤送信体験ゲーム（間違い探し）</div>
+                        <div class="card-desc">送信前のメールに潜む危険を探す間違い探し。宛先・添付・CC・本文の残存情報など、加害者にならないための5問。</div>
+                        <div class="card-tags"><span>全業種</span><span>午後①</span><span>間違い探し</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+                <a class="card" href="security_case_study.html">
+                    <div class="card-band band-purple"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-purple">総合｜4本柱を横断</span>
+                        <div class="card-icon">🔒</div>
+                        <div class="card-title">情報セキュリティ ケーススタディ（5ケース）</div>
+                        <div class="card-desc">ランサム／サプライチェーン／BEC／情報管理／なりすましの5場面を、受講6社の業種に合わせて出題。研修全体の総まとめに最適。</div>
+                        <div class="card-tags"><span>全業種</span><span>午前③・午後②③</span><span>選択式</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+                <a class="card" href="internal_fraud_quiz.html">
+                    <div class="card-band band-green"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-green">PILLAR 4｜内部不正</span>
+                        <div class="card-icon">🔐</div>
+                        <div class="card-title">内部不正防止研修クイズ</div>
+                        <div class="card-desc">図面・金型データのUSB持ち出しを題材に、当事者・管理者・経営者それぞれの立場で「あなたならどうする」を問う4問。</div>
+                        <div class="card-tags"><span>製造業</span><span>午後②</span><span>立場別</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+                <a class="card" href="security-quiz.html">
+                    <div class="card-band band-green"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-green">PILLAR 4｜情報漏洩</span>
+                        <div class="card-icon">📄</div>
+                        <div class="card-title">情報漏洩対策クイズ</div>
+                        <div class="card-desc">退職者による顧客データ持ち出し事件を題材に、パスワード管理・初動対応・管理責任・転職時のルールを学ぶ4問。</div>
+                        <div class="card-tags"><span>全業種</span><span>午後②</span><span>ケース型</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+                <a class="card" href="roulette_3.html">
+                    <div class="card-band band-gray"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-gray">進行ツール</span>
+                        <div class="card-icon">🎰</div>
+                        <div class="card-title">ルーレット（指名・お題・振り返り）</div>
+                        <div class="card-desc">「セキュリティお題」「指名（1〜9番）」「二択（YES/NO）」のプリセット付き。発表者決めや、テーマ別の振り返り・アイスブレイクに。</div>
+                        <div class="card-tags"><span>随時</span><span>アイスブレイク</span><span>プリセット</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+                <a class="card" href="Wireshark実習用スライド.pptx">
+                    <div class="card-band band-teal"></div>
+                    <div class="card-body">
+                        <span class="card-cat cat-teal">実習｜参考資料</span>
+                        <div class="card-icon">🦈</div>
+                        <div class="card-title">Wireshark実習用スライド</div>
+                        <div class="card-desc">パケットキャプチャの実習用スライド（PowerPoint）。実習パートで使用。※クリックでPowerPointが起動します。</div>
+                        <div class="card-tags"><span>実習</span><span>.pptx</span></div>
+                        <div class="card-open">開く →</div>
+                    </div>
+                </a>
+
+            </div>
+        </section>
+
+        <section class="closing">
+            <h2>🚀 クロージングで渡す「明日からの3アクション」</h2>
+            <ol>
+                <li>重要なシステム・メールに「多要素認証（MFA）」を有効化する</li>
+                <li>振込先変更の連絡は、必ず“既知の電話番号”へ折り返して確認するルールを作る</li>
+                <li>大切なデータは、ネットから切り離した「オフラインのバックアップ」を定期的に取る</li>
+            </ol>
+            <p class="windows">▼ 持ち帰り資料・相談窓口：IPA「中小企業の情報セキュリティ対策ガイドライン」／「SECURITY ACTION」自己宣言（一つ星から）／「情報セキュリティ10大脅威」最新版／ IPA情報セキュリティ安心相談窓口・群馬県警サイバー相談窓口（＃9110）・関東経済産業局（いずれも無料）。</p>
+        </section>
+
+        <footer>
+            <div class="note">
+                📌 <b>進行メモ</b>：特定企業の名指しは避け「御社のような業種では〜」の形で。偽アカウント被害の話題も一般論として扱い、受講者が発言しやすい空気づくりを。<br>
+                💻 <b>動作</b>：全ツールはインターネット接続不要（オフライン動作）。このページと同じフォルダに各ファイルを置いたまま開いてください。
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

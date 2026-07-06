@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メール誤送信体験ゲーム（間違い探し）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* ヘッダー */
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1em;
+        }
+
+        /* スタート画面 */
+        .start-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .start-screen h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .rules {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .rules h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rules ul {
+            list-style: none;
+            padding-left: 10px;
+        }
+
+        .rules li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+        }
+
+        .rules li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+            margin-top: 20px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.5);
+        }
+
+        /* ゲーム画面 */
+        .game-screen {
+            display: none;
+        }
+
+        /* 進捗バー */
+        .progress-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .question-counter {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .timer {
+            background: #e74c3c;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        /* メール表示エリア */
+        .email-container {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .email-toolbar {
+            background: #f5f5f5;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .toolbar-btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            color: #555;
+        }
+
+        .email-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .email-field {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .email-field:last-child {
+            border-bottom: none;
+        }
+
+        .email-label {
+            width: 80px;
+            color: #888;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .email-value {
+            flex: 1;
+            color: #333;
+        }
+
+        .email-body {
+            padding: 25px;
+            line-height: 1.8;
+            min-height: 200px;
+        }
+
+        .email-attachment {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .attachment-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 0.9em;
+        }
+
+        .attachment-icon {
+            font-size: 1.2em;
+        }
+
+        /* クリック可能な間違い箇所 */
+        .clickable {
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            border-radius: 3px;
+            padding: 2px 4px;
+            margin: -2px -4px;
+        }
+
+        .clickable:hover {
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .clickable.found {
+            background: rgba(231, 76, 60, 0.2);
+            color: #c0392b;
+            text-decoration: line-through;
+        }
+
+        .clickable.wrong {
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* ヒント・操作エリア */
+        .action-area {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .instruction {
+            text-align: center;
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .instruction strong {
+            color: #e74c3c;
+        }
+
+        .found-count {
+            text-align: center;
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .found-count span {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hint-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .hint-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .hint-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .answer-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .answer-btn:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            display: none;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        /* ヒント表示 */
+        .hint-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .hint-box h4 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .hint-box p {
+            color: #856404;
+            font-size: 0.95em;
+        }
+
+        /* 解説表示 */
+        .explanation-box {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .explanation-box h4 {
+            color: #155724;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .explanation-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .explanation-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .explanation-item .mistake {
+            color: #c0392b;
+            font-weight: bold;
+        }
+
+        .explanation-item .correct {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .explanation-item p {
+            color: #555;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        /* 結果画面 */
+        .result-screen {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .result-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .result-score {
+            font-size: 3em;
+            color: #e74c3c;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .result-message {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .result-details {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .result-details h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #666;
+        }
+
+        .detail-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .tips-section {
+            background: #fff3cd;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            text-align: left;
+        }
+
+        .tips-section h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tips-section ul {
+            list-style: none;
+        }
+
+        .tips-section li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #856404;
+        }
+
+        .tips-section li::before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+
+        .retry-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+            margin-top: 20px;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.5);
+        }
+
+        /* シナリオ情報 */
+        .scenario-info {
+            background: #e8f4fd;
+            border: 1px solid #3498db;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .scenario-info h4 {
+            color: #2980b9;
+            margin-bottom: 8px;
+        }
+
+        .scenario-info p {
+            color: #2c3e50;
+            font-size: 0.95em;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.4em;
+            }
+
+            .email-field {
+                flex-direction: column;
+            }
+
+            .email-label {
+                width: auto;
+                margin-bottom: 3px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📧 メール誤送信体験ゲーム</h1>
+            <p>〜 間違い探しで学ぶ情報セキュリティ 〜</p>
+        </header>
+
+        <!-- スタート画面 -->
+        <div class="start-screen" id="startScreen">
+            <h2>🔍 メールの間違いを見つけよう！</h2>
+            <p>送信前のメールに潜む危険な間違いを探してください</p>
+
+            <div class="rules">
+                <h3>📋 ゲームのルール</h3>
+                <ul>
+                    <li>全5問のメールから間違いを探します</li>
+                    <li>各メールには<strong>2〜3箇所</strong>の間違いがあります</li>
+                    <li>間違いだと思う箇所を<strong>クリック</strong>してください</li>
+                    <li>分からない時は<strong>ヒント</strong>を使えます（減点あり）</li>
+                    <li>全ての間違いを見つけるか、<strong>答え合わせ</strong>で次へ進めます</li>
+                    <li>制限時間は<strong>各問題2分</strong>です</li>
+                </ul>
+            </div>
+
+            <p style="color: #e74c3c; font-weight: bold;">⚠️ 実際の業務でも役立つポイントを学びましょう！</p>
+
+            <button class="start-btn" onclick="startGame()">ゲームスタート 🚀</button>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div class="game-screen" id="gameScreen">
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span class="question-counter" id="questionCounter">問題 1 / 5</span>
+                    <span class="timer" id="timer">⏱ 2:00</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 20%"></div>
+                </div>
+            </div>
+
+            <div class="scenario-info" id="scenarioInfo">
+                <h4>📝 シナリオ</h4>
+                <p id="scenarioText"></p>
+            </div>
+
+            <div class="email-container" id="emailContainer">
+                <!-- メール内容がここに動的に挿入される -->
+            </div>
+
+            <div class="action-area">
+                <p class="instruction">💡 <strong>間違い</strong>だと思う箇所をクリックしてください</p>
+                <div class="found-count">
+                    発見した間違い: <span id="foundCount">0</span> / <span id="totalMistakes">3</span>
+                </div>
+                <div class="btn-group">
+                    <button class="hint-btn" id="hintBtn" onclick="showHint()">💡 ヒントを見る</button>
+                    <button class="answer-btn" onclick="showAnswer()">✅ 答え合わせ</button>
+                    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">次の問題へ ➡️</button>
+                </div>
+
+                <div class="hint-box" id="hintBox">
+                    <h4>💡 ヒント</h4>
+                    <p id="hintText"></p>
+                </div>
+
+                <div class="explanation-box" id="explanationBox">
+                    <h4>✅ 解説</h4>
+                    <div id="explanationContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div class="result-screen" id="resultScreen">
+            <div class="result-icon" id="resultIcon">🏆</div>
+            <h2 class="result-title">ゲーム終了！</h2>
+            <div class="result-score" id="resultScore">85点</div>
+            <p class="result-message" id="resultMessage">お見事！セキュリティ意識が高いですね！</p>
+
+            <div class="result-details">
+                <h3>📊 あなたの結果</h3>
+                <div class="detail-item">
+                    <span class="detail-label">発見した間違い</span>
+                    <span class="detail-value" id="totalFound">0 / 0</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">使用したヒント</span>
+                    <span class="detail-value" id="hintsUsed">0回</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">かかった時間</span>
+                    <span class="detail-value" id="totalTime">0分0秒</span>
+                </div>
+            </div>
+
+            <div class="tips-section">
+                <h3>📌 メール送信前のチェックポイント</h3>
+                <ul>
+                    <li>宛先（To/CC/BCC）は正しいですか？</li>
+                    <li>添付ファイルは正しいものですか？</li>
+                    <li>本文に前のメールの内容が残っていませんか？</li>
+                    <li>社外秘情報が含まれていませんか？</li>
+                    <li>送信前に一呼吸置いて確認しましょう！</li>
+                </ul>
+            </div>
+
+            <button class="retry-btn" onclick="restartGame()">もう一度チャレンジ 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // ゲームデータ
+        const questions = [
+            {
+                scenario: "あなたは営業部の田中です。新規取引先の株式会社ABC商事の山田様に見積書を送ろうとしています。",
+                email: {
+                    to: { text: "yamada@abc-shoji.co.jp", isMistake: false },
+                    cc: { text: "tanaka.taro@example.com（自分）", isMistake: false },
+                    bcc: { text: "", isMistake: false },
+                    subject: "【見積書送付】システム導入のご提案",
+                    from: "田中 太郎 <tanaka.taro@example.com>",
+                    body: [
+                        { text: "株式会社ABC商事", isMistake: false },
+                        { text: "山田 様", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "お世話になっております。", isMistake: false },
+                        { text: "株式会社サンプルの田中です。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "先日お打ち合わせいただきました件について、", isMistake: false },
+                        { text: "見積書を添付にてお送りいたします。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "なお、株式会社XYZ工業様向けの特別価格となっておりますので、", isMistake: true, mistakeType: "wrong_company", explanation: "別の取引先名が残っている", correct: "株式会社ABC商事様向け" },
+                        { text: "ご確認いただけますと幸いです。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "ご不明点がございましたら、お気軽にお問い合わせください。", isMistake: false }
+                    ],
+                    attachment: { text: "見積書_XYZ工業様_20260115.pdf", isMistake: true, mistakeType: "wrong_attachment", explanation: "別の取引先の見積書を添付している", correct: "見積書_ABC商事様_20260115.pdf" }
+                },
+                hints: ["本文中に別の会社名が混じっていませんか？", "添付ファイル名をよく確認してください"],
+                mistakeCount: 2
+            },
+            {
+                scenario: "あなたは人事部の佐藤です。社員全員に給与明細の配布についてお知らせメールを送ろうとしています。",
+                email: {
+                    to: { text: "all-staff@example.com", isMistake: false },
+                    cc: { text: "hr-team@example.com", isMistake: false },
+                    bcc: { text: "", isMistake: false },
+                    subject: "【重要】12月分給与明細の配布について",
+                    from: "佐藤 花子 <sato.hanako@example.com>",
+                    body: [
+                        { text: "社員各位", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "お疲れ様です。人事部の佐藤です。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "12月分の給与明細を配布いたしますので、", isMistake: false },
+                        { text: "各自ご確認ください。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "【配布場所】人事部カウンター", isMistake: false },
+                        { text: "【配布期間】12/25（月）〜 12/28（木）", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "なお、鈴木一郎さん（営業部）の給与は今月から昇給となります。", isMistake: true, mistakeType: "personal_info", explanation: "個人の給与情報を全社員向けメールに記載", correct: "（個人情報は記載しない）" },
+                        { text: "", isMistake: false },
+                        { text: "ご質問は人事部までお願いいたします。", isMistake: false }
+                    ],
+                    attachment: { text: "給与明細一覧_全社員_202512.xlsx", isMistake: true, mistakeType: "confidential_file", explanation: "全社員の給与一覧を添付している", correct: "（給与明細一覧は添付しない）" }
+                },
+                hints: ["全社員に送るメールに、特定の人の情報が含まれていませんか？", "添付ファイルの内容は全員に見せて良いものですか？"],
+                mistakeCount: 2
+            },
+            {
+                scenario: "あなたは開発部の木村です。外部のベンダー3社に同時にプロジェクトの進捗確認メールを送ろうとしています。",
+                email: {
+                    to: { text: "vendor-a@aaa.co.jp, vendor-b@bbb.co.jp, vendor-c@ccc.co.jp", isMistake: true, mistakeType: "should_be_bcc", explanation: "複数の外部取引先をToに入れると、お互いのメールアドレスが見えてしまう", correct: "BCCで送信すべき" },
+                    cc: { text: "kimura@example.com", isMistake: false },
+                    bcc: { text: "", isMistake: false },
+                    subject: "【進捗確認】〇〇プロジェクト開発状況について",
+                    from: "木村 次郎 <kimura@example.com>",
+                    body: [
+                        { text: "各社ご担当者様", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "お世話になっております。", isMistake: false },
+                        { text: "株式会社サンプル 開発部の木村です。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "〇〇プロジェクトの進捗状況について確認させてください。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "現在の開発状況と今後のスケジュールについて、", isMistake: false },
+                        { text: "今週金曜日までにご報告いただけますと幸いです。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "なお、A社様の見積もりが最も安価でしたので、", isMistake: true, mistakeType: "competitor_info", explanation: "他社の価格情報を全社に開示している", correct: "（競合他社の情報は記載しない）" },
+                        { text: "発注量を増やすことを検討しております。", isMistake: false }
+                    ],
+                    attachment: { text: "なし", isMistake: false }
+                },
+                hints: ["宛先の設定方法は適切ですか？", "本文中に特定の会社だけに伝えるべき情報がありませんか？"],
+                mistakeCount: 2
+            },
+            {
+                scenario: "あなたは総務部の高橋です。同僚の鈴木さん（suzuki@example.com）に社内イベントの相談メールを送ろうとしています。",
+                email: {
+                    to: { text: "suzuki@example.co.jp", isMistake: true, mistakeType: "wrong_domain", explanation: "ドメインが間違っている（.com → .co.jp）社外に送信されてしまう可能性", correct: "suzuki@example.com" },
+                    cc: { text: "", isMistake: false },
+                    bcc: { text: "", isMistake: false },
+                    subject: "忘年会の件で相談",
+                    from: "高橋 三郎 <takahashi@example.com>",
+                    body: [
+                        { text: "鈴木さん", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "お疲れ様です。高橋です。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "忘年会の幹事の件、相談があります。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "会場は「居酒屋さくら」で予約しようと思います。", isMistake: false },
+                        { text: "参加者は20名程度、予算は一人5,000円で考えています。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "あと、山本部長は最近体調が悪いらしいので、", isMistake: true, mistakeType: "gossip", explanation: "上司の体調に関する噂をメールに記載", correct: "（プライバシーに関わる情報は記載しない）" },
+                        { text: "二次会は欠席かもしれません。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "今日の午後、打ち合わせできますか？", isMistake: false }
+                    ],
+                    attachment: { text: "なし", isMistake: false }
+                },
+                hints: ["メールアドレスのドメイン（@以降）は正しいですか？", "他の人のプライバシーに関わる内容が含まれていませんか？"],
+                mistakeCount: 2
+            },
+            {
+                scenario: "あなたは経理部の中村です。取引先のD社に請求書を送ろうとしています。CCに上司（部長）を入れる予定です。",
+                email: {
+                    to: { text: "keiri@d-company.co.jp", isMistake: false },
+                    cc: { text: "yamamoto-bucho@example.com, yamamoto@example.com", isMistake: true, mistakeType: "duplicate_similar", explanation: "同姓の別人（山本部長と山本さん）両方にCCしている", correct: "yamamoto-bucho@example.com のみ" },
+                    bcc: { text: "", isMistake: false },
+                    subject: "【請求書送付】11月分サービス利用料",
+                    from: "中村 四郎 <nakamura@example.com>",
+                    body: [
+                        { text: "D社 経理ご担当者様", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "お世話になっております。", isMistake: false },
+                        { text: "株式会社サンプル 経理部の中村です。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "11月分のサービス利用料について、", isMistake: false },
+                        { text: "請求書を添付にてお送りいたします。", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "【請求金額】¥1,500,000-（税込）", isMistake: false },
+                        { text: "【お支払期限】2026年1月31日", isMistake: false },
+                        { text: "", isMistake: false },
+                        { text: "お振込みは以下の口座にお願いいたします。", isMistake: false },
+                        { text: "みずほ銀行 渋谷支店 普通 1234567", isMistake: false },
+                        { text: "口座名義：カ）サンプル", isMistake: false },
+                        { text: "（以前のE社様向け振込先から変更となっております）", isMistake: true, mistakeType: "previous_content", explanation: "以前のメールの内容が残っている", correct: "（不要な文言を削除）" }
+                    ],
+                    attachment: { text: "請求書_D社様_202511.pdf", isMistake: false }
+                },
+                hints: ["CCの宛先は本当に上司だけですか？", "本文に不要な過去の情報が残っていませんか？"],
+                mistakeCount: 2
+            }
+        ];
+
+        // ゲーム状態
+        let currentQuestion = 0;
+        let foundMistakes = [];
+        let totalFoundMistakes = 0;
+        let totalMistakesInGame = 0;
+        let hintsUsed = 0;
+        let currentHintIndex = 0;
+        let timerInterval;
+        let timeRemaining;
+        let totalTimeSpent = 0;
+        let questionStartTime;
+
+        // ゲーム開始
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            document.getElementById('resultScreen').style.display = 'none';
+
+            currentQuestion = 0;
+            foundMistakes = [];
+            totalFoundMistakes = 0;
+            totalMistakesInGame = questions.reduce((sum, q) => sum + q.mistakeCount, 0);
+            hintsUsed = 0;
+            totalTimeSpent = 0;
+
+            loadQuestion();
+        }
+
+        // 問題読み込み
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            foundMistakes = [];
+            currentHintIndex = 0;
+
+            // UI更新
+            document.getElementById('questionCounter').textContent = `問題 ${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('progressFill').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+            document.getElementById('scenarioText').textContent = question.scenario;
+            document.getElementById('foundCount').textContent = '0';
+            document.getElementById('totalMistakes').textContent = question.mistakeCount;
+
+            // ボタンリセット
+            document.getElementById('hintBtn').disabled = false;
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('hintBox').style.display = 'none';
+            document.getElementById('explanationBox').style.display = 'none';
+
+            // メール生成
+            renderEmail(question);
+
+            // タイマー開始
+            startTimer();
+            questionStartTime = Date.now();
+        }
+
+        // メール描画
+        function renderEmail(question) {
+            const email = question.email;
+            let html = `
+                <div class="email-toolbar">
+                    <span class="toolbar-btn">📤 送信</span>
+                    <span class="toolbar-btn">📎 添付</span>
+                    <span class="toolbar-btn">🔤 書式</span>
+                </div>
+                <div class="email-header">
+                    <div class="email-field">
+                        <span class="email-label">宛先:</span>
+                        <span class="email-value">${email.to.isMistake ?
+                            `<span class="clickable" data-mistake="to" onclick="checkMistake(this, 'to')">${email.to.text}</span>` :
+                            email.to.text}</span>
+                    </div>
+                    <div class="email-field">
+                        <span class="email-label">CC:</span>
+                        <span class="email-value">${email.cc.text ? (email.cc.isMistake ?
+                            `<span class="clickable" data-mistake="cc" onclick="checkMistake(this, 'cc')">${email.cc.text}</span>` :
+                            email.cc.text) : '（なし）'}</span>
+                    </div>
+                    <div class="email-field">
+                        <span class="email-label">BCC:</span>
+                        <span class="email-value">${email.bcc.text || '（なし）'}</span>
+                    </div>
+                    <div class="email-field">
+                        <span class="email-label">件名:</span>
+                        <span class="email-value">${email.subject}</span>
+                    </div>
+                    <div class="email-field">
+                        <span class="email-label">差出人:</span>
+                        <span class="email-value">${email.from}</span>
+                    </div>
+                </div>
+                <div class="email-body">
+            `;
+
+            email.body.forEach((line, index) => {
+                if (line.text === '') {
+                    html += '<br>';
+                } else if (line.isMistake) {
+                    html += `<span class="clickable" data-mistake="body-${index}" onclick="checkMistake(this, 'body-${index}')">${line.text}</span><br>`;
+                } else {
+                    html += `<span class="clickable" onclick="wrongClick(this)">${line.text}</span><br>`;
+                }
+            });
+
+            html += '</div>';
+
+            if (email.attachment.text !== 'なし') {
+                html += `
+                    <div class="email-attachment">
+                        <span style="color: #888; margin-right: 10px;">📎 添付ファイル:</span>
+                        ${email.attachment.isMistake ?
+                            `<span class="attachment-item clickable" data-mistake="attachment" onclick="checkMistake(this, 'attachment')">
+                                <span class="attachment-icon">📄</span>
+                                ${email.attachment.text}
+                            </span>` :
+                            `<span class="attachment-item">
+                                <span class="attachment-icon">📄</span>
+                                ${email.attachment.text}
+                            </span>`}
+                    </div>
+                `;
+            }
+
+            document.getElementById('emailContainer').innerHTML = html;
+        }
+
+        // 間違いチェック
+        function checkMistake(element, mistakeId) {
+            if (element.classList.contains('found')) return;
+
+            element.classList.add('found');
+            foundMistakes.push(mistakeId);
+            document.getElementById('foundCount').textContent = foundMistakes.length;
+
+            // 全部見つけたかチェック
+            if (foundMistakes.length === questions[currentQuestion].mistakeCount) {
+                showAnswer();
+            }
+        }
+
+        // 間違いでない箇所をクリック
+        function wrongClick(element) {
+            element.classList.add('wrong');
+            setTimeout(() => {
+                element.classList.remove('wrong');
+            }, 300);
+        }
+
+        // ヒント表示
+        function showHint() {
+            const question = questions[currentQuestion];
+            if (currentHintIndex < question.hints.length) {
+                document.getElementById('hintText').textContent = question.hints[currentHintIndex];
+                document.getElementById('hintBox').style.display = 'block';
+                currentHintIndex++;
+                hintsUsed++;
+
+                if (currentHintIndex >= question.hints.length) {
+                    document.getElementById('hintBtn').disabled = true;
+                }
+            }
+        }
+
+        // 答え合わせ
+        function showAnswer() {
+            stopTimer();
+            totalTimeSpent += (Date.now() - questionStartTime);
+
+            const question = questions[currentQuestion];
+            const email = question.email;
+            let explanationHtml = '';
+
+            // 全ての間違いを表示
+            const allClickables = document.querySelectorAll('.clickable[data-mistake]');
+            allClickables.forEach(el => {
+                el.classList.add('found');
+            });
+
+            // 解説生成
+            const mistakes = [];
+
+            if (email.to.isMistake) {
+                mistakes.push({
+                    location: '宛先',
+                    mistake: email.to.text,
+                    correct: email.to.correct,
+                    explanation: email.to.explanation
+                });
+            }
+            if (email.cc.isMistake) {
+                mistakes.push({
+                    location: 'CC',
+                    mistake: email.cc.text,
+                    correct: email.cc.correct,
+                    explanation: email.cc.explanation
+                });
+            }
+            if (email.attachment.isMistake) {
+                mistakes.push({
+                    location: '添付ファイル',
+                    mistake: email.attachment.text,
+                    correct: email.attachment.correct,
+                    explanation: email.attachment.explanation
+                });
+            }
+            email.body.forEach((line, index) => {
+                if (line.isMistake) {
+                    mistakes.push({
+                        location: '本文',
+                        mistake: line.text,
+                        correct: line.correct,
+                        explanation: line.explanation
+                    });
+                }
+            });
+
+            mistakes.forEach(m => {
+                explanationHtml += `
+                    <div class="explanation-item">
+                        <strong>【${m.location}】</strong><br>
+                        <span class="mistake">✗ ${m.mistake}</span><br>
+                        <span class="correct">○ ${m.correct}</span>
+                        <p>💡 ${m.explanation}</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('explanationContent').innerHTML = explanationHtml;
+            document.getElementById('explanationBox').style.display = 'block';
+            document.getElementById('hintBtn').disabled = true;
+
+            // 見つけた数をカウント
+            totalFoundMistakes += foundMistakes.length;
+
+            // 次へボタン表示
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').textContent =
+                currentQuestion < questions.length - 1 ? '次の問題へ ➡️' : '結果を見る 📊';
+        }
+
+        // 次の問題へ
+        function nextQuestion() {
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        // 結果表示
+        function showResult() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+
+            // スコア計算
+            const baseScore = Math.round((totalFoundMistakes / totalMistakesInGame) * 100);
+            const hintPenalty = hintsUsed * 3;
+            const finalScore = Math.max(0, baseScore - hintPenalty);
+
+            // 結果表示
+            document.getElementById('resultScore').textContent = `${finalScore}点`;
+            document.getElementById('totalFound').textContent = `${totalFoundMistakes} / ${totalMistakesInGame}`;
+            document.getElementById('hintsUsed').textContent = `${hintsUsed}回`;
+
+            const totalSeconds = Math.floor(totalTimeSpent / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            document.getElementById('totalTime').textContent = `${minutes}分${seconds}秒`;
+
+            // メッセージとアイコン
+            let icon, message;
+            if (finalScore >= 90) {
+                icon = '🏆';
+                message = '素晴らしい！セキュリティマスターです！';
+            } else if (finalScore >= 70) {
+                icon = '👏';
+                message = 'お見事！高いセキュリティ意識をお持ちです！';
+            } else if (finalScore >= 50) {
+                icon = '💪';
+                message = 'もう少し！日頃からチェックを心がけましょう！';
+            } else {
+                icon = '📚';
+                message = 'メール送信前の確認を習慣づけましょう！';
+            }
+
+            document.getElementById('resultIcon').textContent = icon;
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        // タイマー開始
+        function startTimer() {
+            timeRemaining = 120; // 2分
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+
+                if (timeRemaining <= 0) {
+                    showAnswer();
+                }
+            }, 1000);
+        }
+
+        // タイマー停止
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // タイマー表示更新
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer').textContent =
+                `⏱ ${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeRemaining <= 30) {
+                document.getElementById('timer').style.background = '#c0392b';
+            } else {
+                document.getElementById('timer').style.background = '#e74c3c';
+            }
+        }
+
+        // リスタート
+        function restartGame() {
+            startGame();
+        }
+    </script>
+</body>
+</html>

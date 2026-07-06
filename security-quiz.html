@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情報漏洩対策クイズ ～あなたならどうする？～</title>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2c5282;
+            --accent: #ed8936;
+            --accent-light: #fbd38d;
+            --success: #38a169;
+            --danger: #e53e3e;
+            --warning: #d69e2e;
+            --bg-main: #f7fafc;
+            --bg-card: #ffffff;
+            --text-main: #2d3748;
+            --text-light: #718096;
+            --shadow: 0 10px 40px rgba(26, 54, 93, 0.12);
+            --shadow-hover: 0 20px 60px rgba(26, 54, 93, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'Yu Gothic', 'Segoe UI', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            border-radius: 2px;
+        }
+
+        h1 {
+            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'Yu Gothic', 'Segoe UI', sans-serif;
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .scenario-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .scenario-box h2 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scenario-box h2::before {
+            content: '📋';
+            font-size: 1.3rem;
+        }
+
+        .scenario-box p {
+            font-size: 0.95rem;
+            line-height: 1.9;
+            opacity: 0.95;
+        }
+
+        .quiz-section {
+            margin-bottom: 40px;
+        }
+
+        .question-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .question-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .question-header {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 20px 25px;
+            position: relative;
+        }
+
+        .question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-right: 12px;
+        }
+
+        .question-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+
+        .question-body {
+            padding: 25px;
+        }
+
+        .question-text {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: #edf2f7;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 20px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+        }
+
+        .option:hover {
+            border-color: var(--primary-light);
+            background: #edf2f7;
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: #ebf4ff;
+        }
+
+        .option.correct {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+
+        .option.incorrect {
+            border-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .option-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .option.correct .option-label {
+            background: var(--success);
+        }
+
+        .option.incorrect .option-label {
+            background: var(--danger);
+        }
+
+        .option-text {
+            flex: 1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, #dd6b20 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            font-family: inherit;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(237, 137, 54, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 16px;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-box.excellent {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border: 2px solid var(--success);
+        }
+
+        .result-box.good {
+            background: linear-gradient(135deg, #fffff0 0%, #fefcbf 100%);
+            border: 2px solid var(--warning);
+        }
+
+        .result-box.needs-improvement {
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            border: 2px solid var(--danger);
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .result-icon {
+            font-size: 2rem;
+        }
+
+        .result-score {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .model-answer {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .model-answer h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-answer h4::before {
+            content: '✓';
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.8rem;
+        }
+
+        .model-answer p {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            line-height: 1.8;
+        }
+
+        .total-result {
+            background: var(--bg-card);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 40px;
+            text-align: center;
+            margin-top: 50px;
+            display: none;
+        }
+
+        .total-result.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        .total-score-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            color: white;
+            box-shadow: 0 10px 40px rgba(26, 54, 93, 0.3);
+        }
+
+        .total-score-value {
+            font-size: 3rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .total-score-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .total-message {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .total-description {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        .reset-btn {
+            display: inline-block;
+            padding: 14px 40px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 25px;
+            font-family: inherit;
+        }
+
+        .reset-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.6rem;
+            }
+
+            .question-header {
+                padding: 15px 20px;
+            }
+
+            .question-body {
+                padding: 20px;
+            }
+
+            .option {
+                padding: 14px 16px;
+            }
+
+            .total-score-circle {
+                width: 130px;
+                height: 130px;
+            }
+
+            .total-score-value {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>情報漏洩対策クイズ</h1>
+            <p class="subtitle">～あなたならどうすべきだったか？～</p>
+        </header>
+
+        <div class="scenario-box">
+            <h2>シナリオ概要</h2>
+            <p>
+                広告会社「アドナミ広告」で顧客情報漏洩事件が発生しました。ライバル会社から顧客データに基づいたダイレクトメールが送られていることが判明。調査の結果、退職した元社員・星崎が、在籍中に同僚・前田のPCから簡単なパスワードを突破してデータを持ち出していたことが明らかになりました。このケースをもとに、あなたならどうすべきだったかを考えてみましょう。
+            </p>
+        </div>
+
+        <div class="quiz-section">
+            <!-- 質問1 -->
+            <div class="question-card" data-question="1">
+                <div class="question-header">
+                    <div class="question-title">
+                        <span class="question-number">1</span>
+                        あなたが前田（データ保有者）だったら
+                    </div>
+                </div>
+                <div class="question-body">
+                    <div class="question-text">
+                        パスワード管理について、どのような対策をとるべきだったでしょうか？
+                    </div>
+                    <div class="options">
+                        <div class="option" data-value="A" data-score="0">
+                            <span class="option-label">A</span>
+                            <span class="option-text">覚えやすいように、自分の名前と誕生日を組み合わせたパスワードを設定する</span>
+                        </div>
+                        <div class="option" data-value="B" data-score="40">
+                            <span class="option-label">B</span>
+                            <span class="option-text">英数字8文字以上のパスワードを設定し、付箋に書いてモニターに貼っておく</span>
+                        </div>
+                        <div class="option" data-value="C" data-score="100">
+                            <span class="option-label">C</span>
+                            <span class="option-text">英数字・記号を含む12文字以上の複雑なパスワードを設定し、定期的に変更する</span>
+                        </div>
+                        <div class="option" data-value="D" data-score="60">
+                            <span class="option-label">D</span>
+                            <span class="option-text">パスワードは複雑にするが、全てのサービスで同じものを使い回す</span>
+                        </div>
+                    </div>
+                    <button class="submit-btn" onclick="checkAnswer(1)" disabled>回答する</button>
+                    <div class="result-box" id="result-1">
+                        <div class="result-header">
+                            <span class="result-icon" id="icon-1"></span>
+                            <div>
+                                <div class="result-score" id="score-1"></div>
+                                <div class="result-label">この質問の得点</div>
+                            </div>
+                        </div>
+                        <div class="model-answer">
+                            <h4>模範解答と解説</h4>
+                            <p><strong>正解：C</strong><br>
+                            前田のパスワードは「名前の一部と数字を組み合わせた簡単なもの」でした。これが星崎に突破される原因となりました。パスワードは英数字・記号を含む12文字以上の複雑なものを設定し、定期的に変更することが重要です。また、付箋に書いて貼る行為や、同じパスワードの使い回しもセキュリティリスクとなります。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 質問2 -->
+            <div class="question-card" data-question="2">
+                <div class="question-header">
+                    <div class="question-title">
+                        <span class="question-number">2</span>
+                        あなたが前田（情報漏洩の疑いをかけられた立場）だったら
+                    </div>
+                </div>
+                <div class="question-body">
+                    <div class="question-text">
+                        情報漏洩の疑いが生じた際、最初にどのような行動をとるべきだったでしょうか？
+                    </div>
+                    <div class="options">
+                        <div class="option" data-value="A" data-score="40">
+                            <span class="option-label">A</span>
+                            <span class="option-text">まず自分で徹底的に調査し、原因を特定してから上司に報告する</span>
+                        </div>
+                        <div class="option" data-value="B" data-score="100">
+                            <span class="option-label">B</span>
+                            <span class="option-text">すぐに上司に報告し、会社として組織的に対応できるようにする</span>
+                        </div>
+                        <div class="option" data-value="C" data-score="0">
+                            <span class="option-label">C</span>
+                            <span class="option-text">疑わしい相手（星崎）に直接会いに行き、事実確認を行う</span>
+                        </div>
+                        <div class="option" data-value="D" data-score="20">
+                            <span class="option-label">D</span>
+                            <span class="option-text">証拠が見つかるまでは何もせず、静観する</span>
+                        </div>
+                    </div>
+                    <button class="submit-btn" onclick="checkAnswer(2)" disabled>回答する</button>
+                    <div class="result-box" id="result-2">
+                        <div class="result-header">
+                            <span class="result-icon" id="icon-2"></span>
+                            <div>
+                                <div class="result-score" id="score-2"></div>
+                                <div class="result-label">この質問の得点</div>
+                            </div>
+                        </div>
+                        <div class="model-answer">
+                            <h4>模範解答と解説</h4>
+                            <p><strong>正解：B</strong><br>
+                            このケースが示すように、情報漏洩が疑われた時点では、自分で判断せずにすぐ上司に報告すべきであり、「初動対応が最も重要」です。個人で調査したり、直接相手に会いに行く行為は、証拠の保全や組織的な対応を妨げる可能性があります。情報セキュリティインシデントは、必ず組織として対応することが鉄則です。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 質問3 -->
+            <div class="question-card" data-question="3">
+                <div class="question-header">
+                    <div class="question-title">
+                        <span class="question-number">3</span>
+                        あなたが前田の上司（管理者）だったら
+                    </div>
+                </div>
+                <div class="question-body">
+                    <div class="question-text">
+                        部下の情報管理を監督する立場として、日頃からどのような対策を講じるべきだったでしょうか？
+                    </div>
+                    <div class="options">
+                        <div class="option" data-value="A" data-score="60">
+                            <span class="option-label">A</span>
+                            <span class="option-text">部下を信頼し、各自の判断に任せて自由に業務を行わせる</span>
+                        </div>
+                        <div class="option" data-value="B" data-score="40">
+                            <span class="option-label">B</span>
+                            <span class="option-text">情報セキュリティの重要性を朝礼で一度説明しておく</span>
+                        </div>
+                        <div class="option" data-value="C" data-score="100">
+                            <span class="option-label">C</span>
+                            <span class="option-text">定期的なセキュリティ教育の実施と、パスワード管理・離席時の画面ロックなどの遵守状況を確認する</span>
+                        </div>
+                        <div class="option" data-value="D" data-score="20">
+                            <span class="option-label">D</span>
+                            <span class="option-text">問題が起きてから対処すればよいので、特に事前対策は不要</span>
+                        </div>
+                    </div>
+                    <button class="submit-btn" onclick="checkAnswer(3)" disabled>回答する</button>
+                    <div class="result-box" id="result-3">
+                        <div class="result-header">
+                            <span class="result-icon" id="icon-3"></span>
+                            <div>
+                                <div class="result-score" id="score-3"></div>
+                                <div class="result-label">この質問の得点</div>
+                            </div>
+                        </div>
+                        <div class="model-answer">
+                            <h4>模範解答と解説</h4>
+                            <p><strong>正解：C</strong><br>
+                            このケースでは、星崎の現職の上司が「管理責任」を問われて1ヶ月の停職処分となりました。管理者は部下の情報セキュリティ対策の遵守状況を定期的に確認し、継続的な教育を行う責任があります。一度の説明だけでは不十分であり、また問題が起きてからの対処では手遅れになることが多いです。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 質問4 -->
+            <div class="question-card" data-question="4">
+                <div class="question-header">
+                    <div class="question-title">
+                        <span class="question-number">4</span>
+                        あなたが星崎（転職を考えている社員）だったら
+                    </div>
+                </div>
+                <div class="question-body">
+                    <div class="question-text">
+                        転職活動において、前職の情報をどのように扱うべきだったでしょうか？
+                    </div>
+                    <div class="options">
+                        <div class="option" data-value="A" data-score="0">
+                            <span class="option-label">A</span>
+                            <span class="option-text">転職先で有利になるよう、顧客データを「手土産」として持ち出す</span>
+                        </div>
+                        <div class="option" data-value="B" data-score="40">
+                            <span class="option-label">B</span>
+                            <span class="option-text">データそのものは持ち出さないが、記憶している顧客情報は活用する</span>
+                        </div>
+                        <div class="option" data-value="C" data-score="60">
+                            <span class="option-label">C</span>
+                            <span class="option-text">業務で得た経験やスキルのみをアピールし、具体的な情報は話さない</span>
+                        </div>
+                        <div class="option" data-value="D" data-score="100">
+                            <span class="option-label">D</span>
+                            <span class="option-text">前職の機密情報は一切持ち出さず、自身のスキルと実績のみで勝負する</span>
+                        </div>
+                    </div>
+                    <button class="submit-btn" onclick="checkAnswer(4)" disabled>回答する</button>
+                    <div class="result-box" id="result-4">
+                        <div class="result-header">
+                            <span class="result-icon" id="icon-4"></span>
+                            <div>
+                                <div class="result-score" id="score-4"></div>
+                                <div class="result-label">この質問の得点</div>
+                            </div>
+                        </div>
+                        <div class="model-answer">
+                            <h4>模範解答と解説</h4>
+                            <p><strong>正解：D</strong><br>
+                            星崎は転職活動の「手土産」として顧客データを利用しようと企て、結果として解雇処分となりました。前職の機密情報を持ち出すことは、不正競争防止法違反や営業秘密侵害として刑事罰の対象にもなりえます。転職は自身のスキルと実績で勝負すべきであり、前職の情報を利用することは絶対に避けなければなりません。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="total-result" id="total-result">
+            <div class="total-score-circle">
+                <div class="total-score-value" id="total-score">0</div>
+                <div class="total-score-label">/ 400点</div>
+            </div>
+            <div class="total-message" id="total-message"></div>
+            <div class="total-description" id="total-description"></div>
+            <button class="reset-btn" onclick="resetQuiz()">もう一度チャレンジする</button>
+        </div>
+
+        <footer>
+            <p>情報セキュリティ研修教材 ～内部不正と情報漏洩対策～</p>
+        </footer>
+    </div>
+
+    <script>
+        const scores = {};
+        const totalQuestions = 4;
+        let answeredCount = 0;
+
+        // 選択肢クリック時の処理
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                const card = this.closest('.question-card');
+                const questionNum = card.dataset.question;
+                const resultBox = document.getElementById(`result-${questionNum}`);
+                
+                // 既に回答済みの場合は何もしない
+                if (resultBox.classList.contains('show')) return;
+                
+                // 同じ質問の他の選択肢の選択を解除
+                card.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // この選択肢を選択状態に
+                this.classList.add('selected');
+                
+                // 回答ボタンを有効化
+                card.querySelector('.submit-btn').disabled = false;
+            });
+        });
+
+        function checkAnswer(questionNum) {
+            const card = document.querySelector(`[data-question="${questionNum}"]`);
+            const selectedOption = card.querySelector('.option.selected');
+            
+            if (!selectedOption) return;
+            
+            const score = parseInt(selectedOption.dataset.score);
+            scores[questionNum] = score;
+            
+            // 正解・不正解の表示
+            card.querySelectorAll('.option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (parseInt(opt.dataset.score) === 100) {
+                    opt.classList.add('correct');
+                } else if (opt.classList.contains('selected') && score !== 100) {
+                    opt.classList.add('incorrect');
+                }
+            });
+            
+            // 結果表示
+            const resultBox = document.getElementById(`result-${questionNum}`);
+            const iconEl = document.getElementById(`icon-${questionNum}`);
+            const scoreEl = document.getElementById(`score-${questionNum}`);
+            
+            scoreEl.textContent = `${score}点`;
+            
+            if (score === 100) {
+                resultBox.className = 'result-box show excellent';
+                iconEl.textContent = '🎉';
+            } else if (score >= 40) {
+                resultBox.className = 'result-box show good';
+                iconEl.textContent = '💡';
+            } else {
+                resultBox.className = 'result-box show needs-improvement';
+                iconEl.textContent = '📚';
+            }
+            
+            // ボタンを非活性化
+            card.querySelector('.submit-btn').disabled = true;
+            card.querySelector('.submit-btn').textContent = '回答済み';
+            
+            answeredCount++;
+            
+            // 全問回答したら合計表示
+            if (answeredCount === totalQuestions) {
+                showTotalResult();
+            }
+        }
+
+        function showTotalResult() {
+            const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+            const totalResultEl = document.getElementById('total-result');
+            const totalScoreEl = document.getElementById('total-score');
+            const totalMessageEl = document.getElementById('total-message');
+            const totalDescriptionEl = document.getElementById('total-description');
+            
+            totalScoreEl.textContent = totalScore;
+            
+            if (totalScore === 400) {
+                totalMessageEl.textContent = '🏆 パーフェクト！素晴らしいセキュリティ意識です！';
+                totalDescriptionEl.textContent = '情報セキュリティの重要性を十分に理解されています。この知識を活かして、日々の業務でもセキュリティ意識を高く保ちましょう。';
+            } else if (totalScore >= 300) {
+                totalMessageEl.textContent = '👏 優秀！高いセキュリティ意識をお持ちです';
+                totalDescriptionEl.textContent = '基本的な対策はしっかり理解されています。解説を参考に、さらに知識を深めていきましょう。';
+            } else if (totalScore >= 200) {
+                totalMessageEl.textContent = '📖 良好！さらなる学習で完璧を目指しましょう';
+                totalDescriptionEl.textContent = 'セキュリティの基礎は理解されています。間違えた問題の解説をしっかり確認し、実践に活かしていきましょう。';
+            } else {
+                totalMessageEl.textContent = '⚠️ 要注意！セキュリティ意識を高めましょう';
+                totalDescriptionEl.textContent = '情報漏洩は誰にでも起こりうるリスクです。今回の解説を参考に、日常業務でのセキュリティ対策を見直してみましょう。';
+            }
+            
+            totalResultEl.classList.add('show');
+            
+            // スクロール
+            setTimeout(() => {
+                totalResultEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+
+        function resetQuiz() {
+            // スコアリセット
+            Object.keys(scores).forEach(key => delete scores[key]);
+            answeredCount = 0;
+            
+            // UI リセット
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                opt.style.pointerEvents = 'auto';
+            });
+            
+            document.querySelectorAll('.result-box').forEach(box => {
+                box.classList.remove('show', 'excellent', 'good', 'needs-improvement');
+            });
+            
+            document.querySelectorAll('.submit-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.textContent = '回答する';
+            });
+            
+            document.getElementById('total-result').classList.remove('show');
+            
+            // トップにスクロール
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
